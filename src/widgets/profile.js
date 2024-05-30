@@ -9,7 +9,7 @@ function getProfileWidget(uuid) {
     }
   );
 
-  const prefix = 'aad-custom-widget-profile'
+  const prefix = 'aad-custom-widget-profile';
 
   APIRequest('https://api.github.com/users/' + GitHubUsername)
     .then((res) => res.json())
@@ -49,10 +49,15 @@ function getProfileWidget(uuid) {
         .${prefix}-inner-namevbio a:hover {
           color: #6369ee;
         }
+
+        .${prefix}-inner-population > a {
+          cursor: pointer;
+        }
         `);
 
+      const refs = {};
       const profile = render(
-        null,
+        refs,
         `
           <div class="${prefix}-inner-container">
             <div class="${prefix}-inner-image-wrapper">
@@ -60,20 +65,20 @@ function getProfileWidget(uuid) {
             </div>
             <div class="${prefix}-inner-namevbio">
               <h3>
-                <a class="no-underline no-wrap aad-custom-smoothie-color-transition" href="https://github.com/GroophyLifefor?tab=following">
+                <span class="no-underline no-wrap aad-custom-smoothie-color-transition">
                   ${data.name}
-                </a>
+                </span>
               </h3>
               <p>${data.bio}</p>
             </div>
-            <div class="">
-              <a class="Link--secondary aad-custom-smoothie-color-transition no-underline no-wrap" href="https://github.com/GroophyLifefor?tab=followers">
+            <div class="${prefix}-inner-population">
+              <a ref="followers" class="Link--secondary aad-custom-smoothie-color-transition no-underline no-wrap">
                 ${SVG.friends}
                 <span class="text-bold color-fg-default">${data.followers}</span>
                 followers
               </a>
               · 
-              <a class="Link--secondary aad-custom-smoothie-color-transition no-underline no-wrap" href="https://github.com/GroophyLifefor?tab=following">
+              <a ref="following"< class="Link--secondary aad-custom-smoothie-color-transition no-underline no-wrap">
                 <span class="text-bold color-fg-default">${data.following}</span>
                 following
               </a>        
@@ -81,6 +86,26 @@ function getProfileWidget(uuid) {
           </div>
           `
       );
+
+      refs.followers.addEventListener('click', () => {
+        const url = `https://github.com/${GitHubUsername}?tab=followers`;
+        createFrameModal({
+          title: 'Followers',
+          url: url,
+          selector: (doc) => doc.querySelector('.Layout-main'),
+          prefix: prefix+'-modal-followers',
+        })
+      });
+
+      refs.following.addEventListener('click', () => {
+        const url = `https://github.com/${GitHubUsername}?tab=following`;
+        createFrameModal({
+          title: 'Following',
+          url: url,
+          selector: (doc) => doc.querySelector('.Layout-main'),
+          prefix: prefix+'-modal-following',
+        })
+      });
 
       inner.aadAppendChild(profile);
     });

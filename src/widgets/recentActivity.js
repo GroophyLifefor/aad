@@ -91,80 +91,12 @@ function getRecentActivityWidget(uuid) {
 
     refs.title.addEventListener('click', () => {
       const url = data.html_url;
-      fetch(url)
-        .then((res) => res.text())
-        .then((data) => {
-          const parser = new DOMParser();
-          const htmlDocument = parser.parseFromString(data, 'text/html');
-          // const conversation = htmlDocument.querySelector(
-          //   '.js-quote-selection-container > .js-discussion'
-          // );
-          const conversation = htmlDocument.querySelector(
-            '.js-quote-selection-container'
-          );
-
-          const addAComment = htmlDocument.querySelector('.discussion-timeline-actions');
-          addAComment.setAttribute('style', 'background-color: transparent;');
-
-          createModal('Preview', ({ closeModal }) => {
-            addCustomCSS(`
-              .${prefix}-iframe {
-                width: 100%;
-                height: 100%;
-                border-radius: 8px;
-              }
-
-              .${prefix}-preview {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                padding: 8px;
-                border-radius: 8px;
-              }
-    
-              .${prefix}-preview-external-link-container {
-                display: flex;
-                gap: 4px;
-                align-items: center;
-              }
-    
-              .${prefix}-preview-external-link {
-                font-weight: 500;
-                font-size: 0.75rem;
-                line-height: 1rem;
-                overflow: hidden;
-                display: -webkit-box;
-                -webkit-box-orient: vertical;
-                -webkit-line-clamp: 1;
-              }
-    
-              .${prefix}-preview-external-link:hover {
-                text-decoration: underline;
-              }
-            `);
-
-            const _refs = {};
-            const modal = render(
-              _refs,
-              `
-              <div class="${prefix}-preview">
-                <a target="_blank" href="${url}" class="${prefix}-preview-external-link-container">
-                  ${SVG.externalLink(16, 16)}
-                  <span class="${prefix}-preview-external-link">
-                    Open in new tab
-                  </span>
-                </a>
-                <div ref="inner">
-
-                </div>
-              </div>
-              `
-            );
-
-            _refs.inner.aadAppendChild(conversation);
-            return modal;
-          });
-        });
+      createFrameModal({
+        title: 'Preview',
+        url: url,
+        selector: (doc) => doc.querySelector('.js-quote-selection-container'),
+        prefix: prefix+'-modal-preview',
+      })
     });
 
     return card;

@@ -210,6 +210,124 @@ const SVG = {
 </svg>`,
 };
 
+const cache = {};
+const cacheDEBUG = false;
+const Cache = {
+  set: function (key, value) {
+    if (cacheDEBUG) console.log('Cache set', key, value);
+    cache[key] = value;
+  },
+  get: function (key) {
+    if (cacheDEBUG) console.log('Cache get', key);
+    return cache.hasOwnProperty(key) ? cache[key] : null;
+  },
+  has: function (key) {
+    if (cacheDEBUG) console.log('Cache has', key);
+    return cache.hasOwnProperty(key);
+  },
+  remove: function (key) {
+    if (cacheDEBUG) console.log('Cache remove', key);
+    if (this.has(key)) {
+      delete cache[key];
+    }
+  },
+  clear: function () {
+    if (cacheDEBUG) console.log('Cache clear');
+    for (let key in cache) {
+      if (cache.hasOwnProperty(key)) {
+        delete cache[key];
+      }
+    }
+  },
+};
+/**
+ *
+ * @param {
+ * * url: string,
+ * * selector: function,
+ * * title: string,
+ * * prefix: string
+ * } props
+ */
+function createFrameModal(props) {
+  function create(data) {
+    const parser = new DOMParser();
+    const htmlDocument = parser.parseFromString(data, 'text/html');
+    const conversation = props.selector(htmlDocument);
+    createModal(props.title, ({ closeModal }) => {
+      addCustomCSS(`
+            .${props.prefix}-iframe {
+              width: 100%;
+              height: 100%;
+              border-radius: 8px;
+            }
+
+            .${props.prefix}-preview {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              padding: 8px;
+              border-radius: 8px;
+            }
+  
+            .${props.prefix}-preview-external-link-container {
+              display: flex;
+              gap: 4px;
+              align-items: center;
+            }
+  
+            .${props.prefix}-preview-external-link {
+              font-weight: 500;
+              font-size: 0.75rem;
+              line-height: 1rem;
+              overflow: hidden;
+              display: -webkit-box;
+              -webkit-box-orient: vertical;
+              -webkit-line-clamp: 1;
+            }
+  
+            .${props.prefix}-preview-external-link:hover {
+              text-decoration: underline;
+            }
+          `);
+
+      const _refs = {};
+      const modal = render(
+        _refs,
+        `
+            <div class="${props.prefix}-preview">
+              <a target="_blank" href="${props.url}" class="${
+          props.prefix
+        }-preview-external-link-container">
+                ${SVG.externalLink(16, 16)}
+                <span class="${props.prefix}-preview-external-link">
+                  Open in new tab
+                </span>
+              </a>
+              <div ref="inner">
+
+              </div>
+            </div>
+            `
+      );
+
+      _refs.inner.aadAppendChild(conversation);
+      return modal;
+    });
+  }
+
+  if (Cache.has(props.url)) {
+    create(Cache.get(props.url));
+  } else {
+    fetch(props.url)
+      .then((res) => res.text())
+      .then((data) => {
+        Cache.set(props.url, data);
+        create(data);
+      });
+  }
+}
+
 function addCustomCSS(css) {
   document.head.appendChild(document.createElement('style')).innerHTML = css;
 }
@@ -311,7 +429,6 @@ function addWidget(id, widget) {
 }
 
 function boxStartDrag(e) {
-  console.log('dragstart', e.currentTarget.id);
   e.dataTransfer.setData('dragged_id', e.currentTarget.id);
 }
 
@@ -555,7 +672,9 @@ function prepareRecentActivity(_feed) {
 }
 
 function prepareUsername(_feed) {
-  const _ = document.querySelectorAll('[data-target="deferred-side-panel.panel"]')[1];
+  const _ = document.querySelectorAll(
+    '[data-target="deferred-side-panel.panel"]'
+  )[1];
   const __ = _.querySelectorAll('.Truncate-text');
   GitHubUsername = __[0].innerText.trim();
 }
