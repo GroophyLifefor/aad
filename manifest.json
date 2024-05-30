@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "AAD",
+  "version": "1.0",
+  "description": "GitHub interface supporter for dumb and lazy developers",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.github.com/*"],
+      "js": [
+        "src/utils/base.js", 
+        "src/components/remainingTokens.js",
+        "src/components/widgetContainer.js",
+        "src/components/createModal.js",
+        "src/widgets/profile.js", 
+        "src/widgets/recentActivity.js",
+        "src/widgets/newWidget.js",
+        "src/app.js"
+      ]
+    }
+  ]
+}
