@@ -1,4 +1,4 @@
-function createModal(title, modalFactory) {
+function createModal(title, config, modalFactory) {
   const body = document.querySelector('body');
 
   const refs = {};
@@ -24,6 +24,13 @@ function createModal(title, modalFactory) {
       'aad-custom-component-create-modal-container-close'
     );
     setTimeout(() => {
+      config?.cssUUIDs?.forEach((uuid) => {
+        let $_ = null;
+        try {
+          $_ = document.querySelector(`[data-uuid="${uuid}"]`);
+        } catch {}
+        $_?.remove();
+      });
       modalContainer.remove();
     }, 300);
   };
@@ -31,7 +38,7 @@ function createModal(title, modalFactory) {
   refs.close.addEventListener('click', closeModal);
 
   const modal = modalFactory({
-    closeModal: closeModal
+    closeModal: closeModal,
   });
 
   addCustomCSS(`

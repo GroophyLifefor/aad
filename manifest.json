@@ -19,6 +19,7 @@
       "matches": ["https://*.github.com/*"],
       "js": [
         "src/utils/base.js", 
+        "src/utils/searchInModal.js", 
         "src/components/remainingTokens.js",
         "src/components/widgetContainer.js",
         "src/components/createModal.js",

@@ -240,21 +240,50 @@ const Cache = {
     }
   },
 };
+
+const aad_sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 /**
  *
  * @param {
  * * url: string,
  * * selector: function,
  * * title: string,
- * * prefix: string
+ * * prefix: string,
+ * * headers?: object
  * } props
  */
 function createFrameModal(props) {
-  function create(data) {
+  async function create(data) {
     const parser = new DOMParser();
     const htmlDocument = parser.parseFromString(data, 'text/html');
-    const conversation = props.selector(htmlDocument);
-    createModal(props.title, ({ closeModal }) => {
+
+    const cssLinks = htmlDocument.querySelectorAll('link[rel="stylesheet"]');
+    const cssUUIDs = [];
+    cssLinks.forEach((link) => {
+      const cssLink = document.createElement('link');
+      cssLink.type = 'text/css';
+      cssLink.setAttribute('crossorigin', 'anonymous');
+      cssLink.rel = 'stylesheet';
+      cssLink.setAttribute('href', link.getAttribute('href'));
+      const uuid = generateUUID();
+      cssLink.setAttribute('data-uuid', uuid);
+      document.head.appendChild(cssLink);
+      cssUUIDs.push(uuid);
+    });
+
+    let conversation = props.selector(htmlDocument);
+    let count = 0;
+    while (!conversation && count < 20) {
+      await aad_sleep(100);
+      console.log('waiting for conversation', props.url);
+      conversation = props.selector(htmlDocument);
+      count++;
+    }
+    // To guarantee the search results are ready
+    aad_sleep(100);
+
+    createModal(props.title, { cssUUIDs: cssUUIDs }, ({ closeModal }) => {
       addCustomCSS(`
             .${props.prefix}-iframe {
               width: 100%;
@@ -319,7 +348,8 @@ function createFrameModal(props) {
   if (Cache.has(props.url)) {
     create(Cache.get(props.url));
   } else {
-    fetch(props.url)
+    let headers = props.headers || {};
+    fetch(props.url, headers)
       .then((res) => res.text())
       .then((data) => {
         Cache.set(props.url, data);
@@ -679,6 +709,10 @@ function prepareUsername(_feed) {
   GitHubUsername = __[0].innerText.trim();
 }
 
+function prepareUtils() {
+  searchInModal();
+}
+
 function clearFeed() {
   initContainers();
   return new Promise((resolve) => {
@@ -721,6 +755,10 @@ function clearFeed() {
         }
       `);
 
+    document.querySelector(
+      '.AppHeader-context-item-label'
+    ).innerHTML = ` Dashboard <span class="ActionListItem-label color-fg-muted f6">(Click to back default feed)</span>`;
+
     // Clear the feed (entire homepage without header)
     const aside = document.querySelector('.application-main > div > aside');
     if (aside) {
@@ -735,6 +773,7 @@ function clearFeed() {
       _feed.addEventListener(
         'transitionend',
         function () {
+          prepareUtils();
           prepareRecentActivity(_feed);
           prepareUsername(_feed);
 

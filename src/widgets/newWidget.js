@@ -55,7 +55,7 @@ function getNewWidgetWidget(uuid) {
   );
 
   buttonRefs.new.addEventListener('click', () => {
-    createModal('Title', ({closeModal}) => {
+    createModal('Title', {}, ({closeModal}) => {
       const _refs = {};
       const modal = render(
         _refs,
