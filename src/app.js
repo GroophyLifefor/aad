@@ -1,10 +1,4 @@
-const site = window.location.href;
-
-/// TODOS:
-/// - get user info async         | https://api.github.com/users/groophylifefor
-/// - get repos async             | https://api.github.com/users/GroophyLifefor/repos
-/// - get repo async              | ^^
-/// - get commits(events) async   | https://api.github.com/repos/GroophyLifefor/Clee/events
+const aad_site_url = window.location.href;
 
 async function main() {
   const _feed = document.querySelector('.application-main > div > div');
@@ -38,8 +32,9 @@ async function main() {
   });
 }
 
-if (site === 'https://github.com/' /* Just Homepage */) {
+if (aad_site_url === 'https://github.com/' /* Just Homepage */) {
   /* */
+  return;
   clearFeed().then((cleared) => {
     if (cleared) {
       main();

@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   input.addEventListener('input', function (e) {
     const value = input.value;
-    chrome.storage.local.set({'pat': value}, () => {});
+    chrome.storage.local.set({ pat: value }, () => {});
   });
 
   chrome.storage.local.get(['pat'], (items) => {

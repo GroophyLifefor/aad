@@ -4,7 +4,8 @@
   "version": "1.0",
   "description": "GitHub interface supporter for dumb and lazy developers",
   "permissions": [
-    "storage"
+    "storage",
+    "history"
   ],
   "action": {
     "default_popup": "src/popup/popup.html",
@@ -19,6 +20,7 @@
       "matches": ["https://*.github.com/*"],
       "js": [
         "src/utils/base.js", 
+        "src/utils/collect.js",
         "src/utils/searchInModal.js", 
         "src/components/remainingTokens.js",
         "src/components/widgetContainer.js",
