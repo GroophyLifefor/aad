@@ -1,5 +1,78 @@
 let isSearchInModalInitialized = false;
 
+const myHeaders = new Headers();
+myHeaders.append(
+  'accept',
+  'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
+);
+myHeaders.append('accept-language', 'en-US,en;q=0.9');
+myHeaders.append('cache-control', 'no-cache');
+myHeaders.append('pragma', 'no-cache');
+myHeaders.append('priority', 'u=0, i');
+myHeaders.append(
+  'sec-ch-ua',
+  '"Brave";v="125", "Chromium";v="125", "Not.A/Brand";v="24"'
+);
+myHeaders.append('sec-ch-ua-mobile', '?0');
+myHeaders.append('sec-ch-ua-platform', '"Windows"');
+myHeaders.append('sec-fetch-dest', 'document');
+myHeaders.append('sec-fetch-mode', 'navigate');
+myHeaders.append('sec-fetch-site', 'same-origin');
+myHeaders.append('sec-fetch-user', '?1');
+myHeaders.append('sec-gpc', '1');
+myHeaders.append('upgrade-insecure-requests', '1');
+myHeaders.append(
+  'user-agent',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+);
+
+const requestOptions = {
+  method: 'GET',
+  headers: myHeaders,
+  redirect: 'follow',
+};
+
+const searchInModalConfig = {
+  search: {
+    title: 'Search Preview',
+    url: (urlParameter) =>
+      `https://github.com/search?q=${urlParameter}&type=repositories`,
+    selector: (doc) => doc.querySelector('main'),
+    prefix: 'aad-custom-utils-search-in-modal-modal-search-preview',
+    headers: requestOptions,
+  },
+  repository: {
+    title: 'Repository Preview',
+    url: (urlParameter) => 'https://github.com' + urlParameter,
+    selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
+    prefix: 'aad-custom-utils-search-in-modal-modal-repository-preview',
+  },
+};
+
+function _openSearchInModalModal(searchType, parameters) {
+  console.log('OK')
+  createFrameModal({
+    title: searchInModalConfig[searchType].title,
+    url: searchInModalConfig[searchType].url(parameters.url),
+    selector: searchInModalConfig[searchType].selector,
+    prefix: searchInModalConfig[searchType].prefix,
+  });
+}
+
+const debounce = (callback, wait) => {
+  let timeoutId = null;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+    }, wait);
+  };
+}
+
+const openSearchInModalModal = debounce((searchType, parameters) => {
+  _openSearchInModalModal(searchType, parameters);
+}, 250);
+
 function oneTimeSearchInModal() {
   const $searchInput = document.querySelector(
     '[data-target="query-builder.input"]'
@@ -12,45 +85,18 @@ function oneTimeSearchInModal() {
     if (e.key === 'Enter') {
       e.preventDefault();
 
-      const myHeaders = new Headers();
-      myHeaders.append(
-        'accept',
-        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
-      );
-      myHeaders.append('accept-language', 'en-US,en;q=0.9');
-      myHeaders.append('cache-control', 'no-cache');
-      myHeaders.append('pragma', 'no-cache');
-      myHeaders.append('priority', 'u=0, i');
-      myHeaders.append(
-        'sec-ch-ua',
-        '"Brave";v="125", "Chromium";v="125", "Not.A/Brand";v="24"'
-      );
-      myHeaders.append('sec-ch-ua-mobile', '?0');
-      myHeaders.append('sec-ch-ua-platform', '"Windows"');
-      myHeaders.append('sec-fetch-dest', 'document');
-      myHeaders.append('sec-fetch-mode', 'navigate');
-      myHeaders.append('sec-fetch-site', 'same-origin');
-      myHeaders.append('sec-fetch-user', '?1');
-      myHeaders.append('sec-gpc', '1');
-      myHeaders.append('upgrade-insecure-requests', '1');
-      myHeaders.append(
-        'user-agent',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
-      );
+      // createFrameModal({
+      //   title: 'Search Preview',
+      //   url: `https://github.com/search?q=${$searchInput.value}&type=repositories`,
+      //   selector: (doc) => doc.querySelector('main'),
+      //   prefix: '',
+      //   headers: requestOptions,
+      // });
 
-      const requestOptions = {
-        method: 'GET',
-        headers: myHeaders,
-        redirect: 'follow',
-      };
-
-      createFrameModal({
-        title: 'Search Preview',
-        url: `https://github.com/search?q=${$searchInput.value}&type=repositories`,
-        selector: (doc) => doc.querySelector('main'),
-        prefix: 'aad-custom-utils-search-in-modal-modal-search-preview',
-        headers: requestOptions
+      openSearchInModalModal('search', {
+        url: searchInput.value,
       });
+
       return;
     }
 
@@ -110,11 +156,14 @@ function searchInModal() {
         .querySelector('h3')
         .innerText.trim();
       if (type === 'Repositories') {
-        createFrameModal({
-          title: 'Repository Preview',
-          url: 'https://github.com' + href,
-          selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
-          prefix: 'aad-custom-utils-search-in-modal-modal-repository-preview',
+        // createFrameModal({
+        //   title: 'Repository Preview',
+        //   url: 'https://github.com' + href,
+        //   selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
+        //   prefix: 'aad-custom-utils-search-in-modal-modal-repository-preview',
+        // });
+        openSearchInModalModal('repository', {
+          url: href,
         });
       }
     });

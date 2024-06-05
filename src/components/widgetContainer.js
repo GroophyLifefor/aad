@@ -60,7 +60,8 @@ function getWidgetContainer() {
 
     .add-custom-feed-two-per-row {
       grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(2, 1fr);
+      grid-template-rows: auto;
+
     } 
 
     .add-custom-feed-one-per-row {

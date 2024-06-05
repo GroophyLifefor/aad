@@ -3,10 +3,7 @@
   "name": "AAD",
   "version": "1.0",
   "description": "GitHub interface supporter for dumb and lazy developers",
-  "permissions": [
-    "storage",
-    "history"
-  ],
+  "permissions": ["storage", "history"],
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_icon": {
@@ -19,15 +16,22 @@
     {
       "matches": ["https://*.github.com/*"],
       "js": [
-        "src/utils/base.js", 
+        "src/utils/base.js",
         "src/utils/collect.js",
-        "src/utils/searchInModal.js", 
+
+        "src/widgets/handler/handler.js",
+
+        "src/utils/searchInModal.js",
+
         "src/components/remainingTokens.js",
         "src/components/widgetContainer.js",
         "src/components/createModal.js",
-        "src/widgets/profile.js", 
+
+        "src/widgets/profile.js",
         "src/widgets/recentActivity.js",
         "src/widgets/newWidget.js",
+        "src/widgets/trending.js",
+
         "src/app.js"
       ]
     }

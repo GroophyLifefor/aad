@@ -1,7 +1,7 @@
 function getProfileWidget(uuid) {
   const widgetId = uuid;
   const { widget, inner } = createWidget(
-    null /* Means I'll add a node later */,
+    CONST_IWillAddLater,
     {
       title: 'Yourself',
       type: 'profile',

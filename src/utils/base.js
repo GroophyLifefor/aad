@@ -13,6 +13,23 @@ const tokens = {
     limit: 5000,
   },
 };
+let widgetReferences = {};
+function loadWidgetReferences() {
+  widgetReferences = {
+    profile: getProfileWidget,
+    recentActivity: getRecentActivityWidget,
+    newWidget: getNewWidgetWidget,
+    trending: getTrendingWidget,
+  };
+}
+
+/**
+ * Constant values start
+ */
+const CONST_IWillAddLater = null;
+/**
+ * Constant values end
+ */
 
 async function onLoad() {
   window.addEventListener('resize', onResize);
@@ -75,89 +92,6 @@ function onResize() {
     }
   }
 }
-/**
- * Widget Factory Start
- */
-
-const widgetCounter = {};
-
-/**
- *
- * @param {HTMLElement} inner
- * @param {*} config
- */
-function createWidget(inner, config) {
-  const widgetId = config.widgetId || generateUUID();
-  const widgetCount = widgetCounter[config.type] || 1;
-  widgetCounter[config.type] = widgetCount + 1;
-
-  addCustomCSS(`
-    .aad-custom-widget-${config.type}-auto-container {
-      width: 100%;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-  
-    .aad-custom-widget-${config.type}-auto-dragbox {
-      width: fit-content;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      align-items: center;
-      cursor: move;
-    }
-  
-    .aad-custom-widget-${config.type}-auto-container[drop-hover] {
-      /* TODO: make smoother */
-    }
-    `);
-
-  const widgetRefs = {};
-  const widgetContainer = render(
-    widgetRefs,
-    `
-      <div id="aad-widget-profile-container-${widgetId}" uuid="${widgetId}" ref="container" class="aad-custom-widget-${
-      config.type
-    }-auto-container">
-        <div ref="dragbox" class="aad-custom-widget-${
-          config.type
-        }-auto-dragbox">
-          ${SVG.draggable('16px', '16px')}
-          <span>${config.title} - [${widgetCount}]</span>
-        </div>
-        <div ref="inner"></div>
-      </div>`
-  );
-
-  const dragbox = widgetRefs.dragbox;
-  const container = widgetRefs.container;
-  const _inner = widgetRefs.inner;
-
-  if (!inner && inner !== null) {
-    _inner.aadAppendChild(inner);
-  }
-
-  dragbox.addEventListener('mousedown', (e) => {
-    e.target.parentNode.setAttribute('draggable', 'true');
-  });
-  dragbox.addEventListener('mouseup', (e) => {
-    e.target.parentNode.setAttribute('draggable', 'false');
-  });
-
-  container.addEventListener('dragstart', boxStartDrag);
-  container.addEventListener('dragend', boxEndDrag);
-
-  return {
-    widget: widgetContainer,
-    inner: _inner,
-  };
-}
-
-/**
- * Widget Factory End
- */
 
 function generateUUID() {
   var d = new Date().getTime();
@@ -282,6 +216,11 @@ function createFrameModal(props) {
     }
     // To guarantee the search results are ready
     aad_sleep(100);
+
+    if (!conversation) {
+      console.error('Conversation not found', props.url);
+      return;
+    }
 
     createModal(props.title, { cssUUIDs: cssUUIDs }, ({ closeModal }) => {
       addCustomCSS(`
@@ -537,6 +476,31 @@ function setContainers(containers) {
   aad_containers = containers;
 }
 
+function printContainers() {
+  chrome.storage.local.get(['containers'], (items) => {
+    const widgetLog = [];
+
+    for (let i = 0; i < items.containers.length; i++) {
+        const container = items.containers[i];
+        const widgets = container.widgets || [];
+
+        for (let j = 0; j < widgets.length; j++) {
+            const widget = widgets[j];
+            const widgetUUID = widget.uuid;
+
+            widgetLog.push({
+                containerIndex: i,
+                widgetIndex: j,
+                widgetUUID: widgetUUID,
+                widgetType: widget.type
+            });
+        }
+    }
+
+    console.table(widgetLog);
+});
+}
+ 
 function initContainers() {
   chrome.storage.local.get(['containers'], (items) => {
     console.log('items', items);
@@ -576,6 +540,10 @@ function initContainers() {
           {
             index: 2,
             widgets: [
+              {
+                type: 'trending',
+                uuid: generateUUID(),
+              },
               {
                 type: 'newWidget',
                 uuid: generateUUID(),

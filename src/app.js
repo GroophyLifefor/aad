@@ -4,12 +4,6 @@ async function main() {
   const _feed = document.querySelector('.application-main > div > div');
   _feed.setAttribute('style', '');
 
-  const widgetReferences = {
-    profile: getProfileWidget,
-    recentActivity: getRecentActivityWidget,
-    newWidget: getNewWidgetWidget,
-  };
-
   const widgetContainer = getWidgetContainer();
   const remainingTokens = getRemainingTokens();
 
@@ -30,13 +24,14 @@ async function main() {
       }
     }
   });
+  printContainers();
 }
 
 if (aad_site_url === 'https://github.com/' /* Just Homepage */) {
   /* */
-  return;
   clearFeed().then((cleared) => {
     if (cleared) {
+      loadWidgetReferences();
       main();
     } else {
       console.log('Failed to clear the feed');
