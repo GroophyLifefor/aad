@@ -1,6 +1,14 @@
 function createModal(title, config, modalFactory) {
   const body = document.querySelector('body');
 
+  if (typeof config.close === 'undefined') {
+    config.close = true;
+  }
+
+  if (typeof config.ms === 'undefined') {
+    config.ms = 300;
+  }
+
   const refs = {};
   const modalContainer = render(
     refs,
@@ -9,9 +17,14 @@ function createModal(title, config, modalFactory) {
         <div class="aad-custom-component-create-modal-divider">
             <div class="aad-custom-component-create-modal-title-container">
                 <h4>${title}</h4>
-                <div ref="close" class="aad-custom-component-create-modal-close-button">
-                    ${SVG.close}
-                </div>
+                ${
+                  config?.close
+                    ? `
+                  <div ref="close" class="aad-custom-component-create-modal-close-button">
+                    ${SVG.close('16px', '16px')}
+                  </div>`
+                    : ''
+                }
             </div>
             <div class="aad-custom-component-create-modal-inner" ref="inner"></div>
         </div>
@@ -32,10 +45,10 @@ function createModal(title, config, modalFactory) {
         $_?.remove();
       });
       modalContainer.remove();
-    }, 300);
+    }, config.ms);
   };
 
-  refs.close.addEventListener('click', closeModal);
+  refs.close?.addEventListener('click', closeModal);
 
   const modal = modalFactory({
     closeModal: closeModal,
@@ -56,7 +69,7 @@ function createModal(title, config, modalFactory) {
         justify-content: center;
         align-items: center;
         z-index: 1000;
-        animation: fadeIn 0.3s ease-in-out forwards;
+        animation: fadeIn ${config.ms}ms ease-in-out forwards;
     }
 
     .aad-custom-component-create-modal-divider {
@@ -82,7 +95,7 @@ function createModal(title, config, modalFactory) {
     }
 
     .aad-custom-component-create-modal-container-close {
-        animation: fadeOut 0.3s ease-in-out forwards;
+        animation: fadeOut ${config.ms}ms ease-in-out forwards;
     }
 
     @keyframes fadeIn {
@@ -114,7 +127,7 @@ function createModal(title, config, modalFactory) {
 
   refs.inner.appendChild(modal);
   refs.container.addEventListener('click', (e) => {
-    if (e.target === refs.container) {
+    if (e.target === refs.container && config?.close) {
       closeModal();
     }
   });

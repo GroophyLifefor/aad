@@ -50,7 +50,6 @@ const searchInModalConfig = {
 };
 
 function _openSearchInModalModal(searchType, parameters) {
-  console.log('OK')
   createFrameModal({
     title: searchInModalConfig[searchType].title,
     url: searchInModalConfig[searchType].url(parameters.url),

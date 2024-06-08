@@ -1,93 +1,95 @@
-function getWidgetContainer() {
-  addCustomCSS(`
+function applyWidgetResponsibility() {
+  const oldCSS = document.querySelector(`[data-uuid="${widgetResponsibility.uuid}"]`);
+  if (oldCSS) oldCSS.remove();
+
+  const dynamicWidth =
+    widgetResponsibility.horizontalCount == 3
+      ? `.add-custom-feed [data-widget-index="3"] {
+        grid-column: span 3 / span 3;
+      }`
+      : ``;
+
+  const css = /*css*/ `
+  main {
+    width: 100dvw;
+    height: 100dvh;
+  }
+
+  .feed-background {
+    /* width: 100dvw; */
+  }
+
+  .add-custom-feed {
+    display: grid;
+    padding: 10px;
+    grid-template-columns: repeat(${widgetResponsibility.horizontalCount}, 1fr);
+    grid-template-rows: min-content;
+    grid-column-gap: 10px;
+    grid-row-gap: 10px;
+    overflow-y: auto;
+    width: 100%;
+    height: calc(100dvh - 66.5px);
+  }
+
+  .add-custom-feed > * > * > * {
+    overflow: hidden;
+  }
+  
+  @media (max-width: ${widgetResponsibility.breaks.sm.min_px}) {
     .add-custom-feed {
-      width: 100%;
-      display: grid;
-      padding: 10px;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: 1fr;
-      grid-column-gap: 10px;
-      grid-row-gap: 10px;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
     }
-
-    .add-custom-feed:nth-child(1) {
-      grid-area: 1 / 1 / 2 / 2;
-    }
-
-    .add-custom-feed-two-per-row:nth-child(1) {
-      grid-area: 1 / 1 / 2 / 2;
-    }
-
-    .add-custom-feed-one-per-row:nth-child(1) {
-      grid-area: 1 / 1 / 2 / 2;
-    }
-
-    .add-custom-feed:nth-child(2) {
-      grid-area: 1 / 2 / 2 / 3;
-    }
-
-    .add-custom-feed-two-per-row:nth-child(2) {
-      grid-area: 1 / 2 / 2 / 3;
-    }
-
-    .add-custom-feed-one-per-row:nth-child(2) {
-      grid-area: 2 / 1 / 3 / 2;
-    }
-
-    .add-custom-feed:nth-child(3) {
-      grid-area: 1 / 3 / 2 / 4;
-    }
-
-    .add-custom-feed-two-per-row:nth-child(3) {
-      grid-area: 2 / 1 / 3 / 2
-    }
-
-    .add-custom-feed-one-per-row:nth-child(3) {
-      grid-area: 3 / 1 / 4 / 2;
-    }
-
-    .add-custom-feed:nth-child(4) {
-      grid-area: 1 / 4 / 2 / 5;
-    }
-
-    .add-custom-feed-two-per-row:nth-child(4) {
-      grid-area: 2 / 2 / 3 / 3
-    }
-
-    .add-custom-feed-one-per-row:nth-child(4) {
-      grid-area: 4 / 1 / 5 / 2;
-    }
-
-    .add-custom-feed-two-per-row {
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: auto;
-
-    } 
-
-    .add-custom-feed-one-per-row {
-      grid-template-columns: 1fr;
-      grid-template-rows: repeat(4, auto);
-    } 
+  }
   
-    .aad-widget-container-wrapper {
-      min-height: 2rem;
-      min-width: 2rem;
-      height: 100%;
-      border-radius: 4px;
-      padding: 4px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+  @media (min-width: ${widgetResponsibility.breaks.sm.min_px}) and (max-width: ${widgetResponsibility.breaks.md.max_px}) {
+    .add-custom-feed {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+  }
   
-    .aad-widget-container-wrapper[drop-hover] {
-      background-color: #5a677a;
-    }
   
-    .drop-shadow {
-      background-color: #3e4754;
+  @media (min-width: ${widgetResponsibility.breaks.lg.min_px}) {
+    .add-custom-feed {
+      grid-template-columns: repeat(${widgetResponsibility.horizontalCount}, minmax(0, 1fr));
     }
-    `);
+
+    ${dynamicWidth}
+  }
+
+  /*
+      grid-template-columns: repeat(${widgetResponsibility.horizontalCount}, minmax(0, 1fr));
+      */
+  
+
+  .aad-widget-container-wrapper {
+    min-height: 2rem;
+    min-width: 2rem;
+    height: 100%;
+    border-radius: 4px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .aad-widget-container-wrapper[drop-hover] {
+    background-color: #5a677a;
+  }
+
+  .drop-shadow {
+    background-color: #3e4754;
+  }
+  `;
+
+  const uuid = addCustomCSS(css);
+  widgetResponsibility.uuid = uuid;
+
+  const event = new CustomEvent('onWidgetsStyled', {  });
+  document.dispatchEvent(event);
+}
+
+function getWidgetContainer() {
+  applyWidgetResponsibility();
 
   const refs = {};
   const container = render(
@@ -98,15 +100,17 @@ function getWidgetContainer() {
       `
   );
 
-  for (let i = 0; i < horizontalWidgetCount; i++) {
+  for (let i = 0; i < widgetResponsibility.horizontalCount; i++) {
     const feedCardRefs = {};
-    const feedCard = GitHubCard(
+    const { refs:cardRefs, node: feedCard } = GitHubCard(
       render(
         feedCardRefs,
         `<div id="container-${i}" ref="container" class="aad-widget-container-wrapper"></div>`
       ),
       { isFirst: true, customPadding: '12px' }
     );
+
+    cardRefs.wrapper.setAttribute('data-widget-index', i);
 
     const container = feedCardRefs.container;
 

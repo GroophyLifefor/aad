@@ -91,13 +91,25 @@ function getRecentActivityWidget(uuid) {
 
     refs.title.addEventListener('click', () => {
       const url = data.html_url;
+      const { close } = aad_loading(uuid);
       createFrameModal({
         title: 'Preview',
         url: url,
         selector: (doc) => doc.querySelector('.js-quote-selection-container'),
         prefix: prefix+'-modal-preview',
+        //onLoad: aad_sleep(5000),
+        onLoaded: () => {
+          close();
+        }
       })
     });
+
+    const arr = ['pull_request', 'issue', 'issue', 'test'];
+    const uniques = [];
+    arr.forEach((item) => {
+      if (!uniques.includes(item)) uniques.push(item);
+    });
+
 
     return card;
   }

@@ -4,6 +4,11 @@
   "version": "1.0",
   "description": "GitHub interface supporter for dumb and lazy developers",
   "permissions": ["storage", "history"],
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_icon": {
@@ -16,6 +21,8 @@
     {
       "matches": ["https://*.github.com/*"],
       "js": [
+        "src/utils/svg.js",
+        "src/utils/cache.js",
         "src/utils/base.js",
         "src/utils/collect.js",
 
@@ -26,6 +33,10 @@
         "src/components/remainingTokens.js",
         "src/components/widgetContainer.js",
         "src/components/createModal.js",
+        "src/components/loadMore.js",
+        "src/components/widgetContainerManager.js",
+        "src/components/settings/settingsCard.js",
+        "src/components/loading.js",
 
         "src/widgets/profile.js",
         "src/widgets/recentActivity.js",

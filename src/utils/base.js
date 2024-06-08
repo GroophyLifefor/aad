@@ -1,5 +1,22 @@
 const GitHubMobileBreakpoint = 768;
-const horizontalWidgetCount = 4;
+const widgetResponsibility = {
+  uuid: '',
+  horizontalCount: 4,
+  breaks: {
+    sm: {
+      min_px: '768px',
+      count: 1,
+    },
+    md: {
+      max_px: '1280px',
+      count: 2,
+    },
+    lg: {
+      min_px: '1280px',
+      count: 4,
+    },
+  },
+};
 let GitHubUsername = '';
 const GitHubRecentActivity = [];
 let aad_containers = [];
@@ -54,13 +71,14 @@ let criticalWidth = {
 };
 let splitType = 'four';
 function onResize() {
+  return;
   const parentest = document.querySelector('.add-custom-feed');
   const element = document.querySelector('.add-custom-feed');
   const isWidthOverflown = element.scrollWidth > element.clientWidth;
 
   if (splitType === 'four') {
     if (isWidthOverflown) {
-      parentest.classList.add('add-custom-feed-two-per-row');
+      parentest.classList.add('add-custom-feed-rows');
       splitType = 'two';
       criticalWidth.two = window.innerWidth;
       return;
@@ -69,14 +87,14 @@ function onResize() {
 
   if (splitType === 'two') {
     if (!isWidthOverflown && window.innerWidth > criticalWidth.two) {
-      parentest.classList.remove('add-custom-feed-two-per-row');
+      parentest.classList.remove('add-custom-feed-rows');
       splitType = 'four';
       return;
     }
 
     if (isWidthOverflown) {
-      parentest.classList.remove('add-custom-feed-two-per-row');
-      parentest.classList.add('add-custom-feed-one-per-row');
+      parentest.classList.remove('add-custom-feed-rows');
+      parentest.classList.add('add-custom-feed-rows');
       splitType = 'one';
       criticalWidth.one = window.innerWidth;
       return;
@@ -112,68 +130,6 @@ function generateUUID() {
     return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
   });
 }
-
-const SVG = {
-  commit: `<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-git-commit">
-    <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z"></path>
-    </svg>`,
-  branch: `<div data-view-component="true" class="aad-custom-branch-badge TimelineItem-badge"><svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-git-branch">
-    <path d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.493 2.493 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"></path>
-  </svg></div>`,
-  repository: `<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-repo">
-    <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path>
-  </svg>`,
-  move: (width, height) =>
-    `<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="${height}" width="${width}" xmlns="http://www.w3.org/2000/svg" data-darkreader-inline-fill="" data-darkreader-inline-stroke="" style="--darkreader-inline-fill: currentColor; --darkreader-inline-stroke: currentColor;"><path d="M475.9 246.2l-79.4-79.4c-5.4-5.4-14.2-5.4-19.6 0l-.2.2c-5.4 5.4-5.4 14.2 0 19.6l54.9 54.9-161.8.5.5-161.8 54.9 54.9c5.4 5.4 14.2 5.4 19.6 0l.2-.2c5.4-5.4 5.4-14.2 0-19.6l-79.4-79.4c-5.4-5.4-14.2-5.4-19.6 0l-79.4 79.4c-5.4 5.4-5.4 14.2 0 19.6l.2.2c5.4 5.4 14.2 5.4 19.6 0l54.9-54.9.5 161.8-161.8-.5 54.9-54.9c5.4-5.4 5.4-14.2 0-19.6l-.2-.2c-5.4-5.4-14.2-5.4-19.6 0l-79.4 79.4c-5.4 5.4-5.4 14.2 0 19.6l79.4 79.4c5.4 5.4 14.2 5.4 19.6 0l.2-.2c5.4-5.4 5.4-14.2 0-19.6L80 270.5l161.8-.5-.5 161.8-54.9-54.9c-5.4-5.4-14.2-5.4-19.6 0l-.2.2c-5.4 5.4-5.4 14.2 0 19.6l79.4 79.4c5.4 5.4 14.2 5.4 19.6 0l79.4-79.4c5.4-5.4 5.4-14.2 0-19.6l-.2-.2c-5.4-5.4-14.2-5.4-19.6 0l-54.9 54.9-.5-161.8 161.8.5-54.9 54.9c-5.4 5.4-5.4 14.2 0 19.6l.2.2c5.4 5.4 14.2 5.4 19.6 0l79.4-79.4c5.5-5.4 5.5-14.2 0-19.6z"></path></svg>`,
-  friends: `<svg text="muted" aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-people">
-    <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4 4 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4Zm-5.5-.5a2 2 0 1 0-.001 3.999A2 2 0 0 0 5.5 3.5Z"></path>
-      </svg>`,
-  close: `<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-x">
-  <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path>
-</svg>`,
-  draggable: (width, height) =>
-    `<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="${height}" width="${width}" xmlns="http://www.w3.org/2000/svg" data-darkreader-inline-fill="" data-darkreader-inline-stroke="" style="--darkreader-inline-fill: currentColor; --darkreader-inline-stroke: currentColor;"><path d="M8.5 7C9.32843 7 10 6.32843 10 5.5C10 4.67157 9.32843 4 8.5 4C7.67157 4 7 4.67157 7 5.5C7 6.32843 7.67157 7 8.5 7ZM8.5 13.5C9.32843 13.5 10 12.8284 10 12C10 11.1716 9.32843 10.5 8.5 10.5C7.67157 10.5 7 11.1716 7 12C7 12.8284 7.67157 13.5 8.5 13.5ZM10 18.5C10 19.3284 9.32843 20 8.5 20C7.67157 20 7 19.3284 7 18.5C7 17.6716 7.67157 17 8.5 17C9.32843 17 10 17.6716 10 18.5ZM15.5 7C16.3284 7 17 6.32843 17 5.5C17 4.67157 16.3284 4 15.5 4C14.6716 4 14 4.67157 14 5.5C14 6.32843 14.6716 7 15.5 7ZM17 12C17 12.8284 16.3284 13.5 15.5 13.5C14.6716 13.5 14 12.8284 14 12C14 11.1716 14.6716 10.5 15.5 10.5C16.3284 10.5 17 11.1716 17 12ZM15.5 20C16.3284 20 17 19.3284 17 18.5C17 17.6716 16.3284 17 15.5 17C14.6716 17 14 17.6716 14 18.5C14 19.3284 14.6716 20 15.5 20Z"></path></svg>`,
-  issueGreen: (width, height) =>
-    `<svg class="octicon octicon-issue-opened open" viewBox="0 0 16 16" version="1.1" height="${height}" width="${width}" aria-hidden="true"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"></path></svg>`,
-  prGreen: (width, height) =>
-    `<svg class="octicon octicon-git-pull-request color-fg-open" viewBox="0 0 16 16" version="1.1" height="${height}" width="${width}" aria-hidden="true"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"></path></svg>`,
-  externalLink: (width, height) =>
-    `<svg stroke="blue" fill="blue" stroke-width="0" viewBox="0 0 24 24" height="${height}" width="${width}" xmlns="http://www.w3.org/2000/svg">
-  <path d="M15.5 2.25a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V4.06l-6.22 6.22a.75.75 0 1 1-1.06-1.06L19.94 3h-3.69a.75.75 0 0 1-.75-.75Z"></path>
-  <path d="M2.5 4.25c0-.966.784-1.75 1.75-1.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.25.25 0 0 0-.25.25v15.5c0 .138.112.25.25.25h15.5a.25.25 0 0 0 .25-.25v-8.5a.75.75 0 0 1 1.5 0v8.5a1.75 1.75 0 0 1-1.75 1.75H4.25a1.75 1.75 0 0 1-1.75-1.75V4.25Z"></path>
-</svg>`,
-};
-
-const cache = {};
-const cacheDEBUG = false;
-const Cache = {
-  set: function (key, value) {
-    if (cacheDEBUG) console.log('Cache set', key, value);
-    cache[key] = value;
-  },
-  get: function (key) {
-    if (cacheDEBUG) console.log('Cache get', key);
-    return cache.hasOwnProperty(key) ? cache[key] : null;
-  },
-  has: function (key) {
-    if (cacheDEBUG) console.log('Cache has', key);
-    return cache.hasOwnProperty(key);
-  },
-  remove: function (key) {
-    if (cacheDEBUG) console.log('Cache remove', key);
-    if (this.has(key)) {
-      delete cache[key];
-    }
-  },
-  clear: function () {
-    if (cacheDEBUG) console.log('Cache clear');
-    for (let key in cache) {
-      if (cache.hasOwnProperty(key)) {
-        delete cache[key];
-      }
-    }
-  },
-};
 
 const aad_sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -237,6 +193,11 @@ function createFrameModal(props) {
               padding: 8px;
               border-radius: 8px;
             }
+
+            .${props.prefix}-preview main {
+              width: 100%;
+              height: 100%;
+            }
   
             .${props.prefix}-preview-external-link-container {
               display: flex;
@@ -285,20 +246,35 @@ function createFrameModal(props) {
   }
 
   if (Cache.has(props.url)) {
+    props.onLoad?.();
     create(Cache.get(props.url));
+    props.onLoaded?.();
   } else {
     let headers = props.headers || {};
     fetch(props.url, headers)
       .then((res) => res.text())
       .then((data) => {
         Cache.set(props.url, data);
-        create(data);
+        if (!!props.onLoad) {
+          props.onLoad.then(() => {
+            create(data);
+            props.onLoaded?.();
+          });
+        } else {
+          create(data);
+          props.onLoaded?.();
+        }
       });
   }
 }
 
 function addCustomCSS(css) {
-  document.head.appendChild(document.createElement('style')).innerHTML = css;
+  const style = document.createElement('style');
+  style.innerHTML = css;
+  const uuid = generateUUID();
+  style.setAttribute('data-uuid', uuid);
+  document.head.appendChild(style);
+  return uuid;
 }
 
 Node.prototype.aadAppendChild = function (newChild) {
@@ -349,14 +325,63 @@ function render(dictionary, html) {
   return parentNodes;
 }
 
+function aadRender(html) {
+  const dictionary = {};
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const parentNodes = Array.from(doc.body.children);
+
+  /*
+      REF FEATURE START
+  */
+  function findRefs(elements) {
+    elements.forEach((element) => {
+      const ref = element.getAttribute('ref');
+      if (ref) {
+        if (!!dictionary) {
+          if (dictionary.hasOwnProperty(ref)) {
+            let oldVal = dictionary[ref];
+            if (!Array.isArray(oldVal)) {
+              oldVal = [oldVal];
+            }
+            dictionary[ref] = [...oldVal, element];
+          } else {
+            dictionary[ref] = element;
+          }
+        }
+      }
+      const children = element.childNodes;
+      for (let i = 0; i < children.length; i++) {
+        if (children[i].nodeType === 1) {
+          findRefs([children[i]]);
+        }
+      }
+    });
+  }
+
+  findRefs(parentNodes);
+  if (parentNodes.length === 1) {
+    return parentNodes[0];
+  }
+  /*
+      REF FEATURE END
+  */
+
+  return {
+    refs: dictionary,
+    node: parentNodes,
+  };
+}
+
 function GitHubCard(child, config) {
   addCustomCSS(`
     .aad-custom-info-wrapper {
-      padding: 8px 0px;
+      /*padding: 8px 0px;*/
     }
   
     .aad-custom-info-wrapper-first {
       padding-top: 0px !important;
+      padding-bottom: 0px !important;
       width: 100%;
     }
   
@@ -378,7 +403,7 @@ function GitHubCard(child, config) {
   const parent = render(
     refs,
     `
-      <div class="aad-custom-info-wrapper ${
+      <div ref="wrapper" class="aad-custom-info-wrapper ${
         config['isFirst'] ? 'aad-custom-info-wrapper-first' : ''
       }">
         <div class="aad-custom-info-container">
@@ -389,7 +414,7 @@ function GitHubCard(child, config) {
     `
   );
   refs.inner.aadAppendChild(child);
-  return parent;
+  return { refs, node: parent };
 }
 
 function addWidget(id, widget) {
@@ -402,10 +427,15 @@ function boxStartDrag(e) {
 }
 
 function getWidgetByUUID(uuid) {
-  for (let container of aad_containers) {
-    for (let widget of container.widgets) {
+  for (let i = 0; i < aad_containers.length; i++) {
+    const container = aad_containers[i];
+    for (let j = 0; j < container.widgets.length; j++) {
+      const widget = container.widgets[j];
       if (widget.uuid === uuid) {
-        return widget;
+        return Object.assign(widget, {
+          containerIndex: i,
+          widgetIndex: j,
+        });
       }
     }
   }
@@ -422,7 +452,10 @@ function boxEndDrag(e) {
       const child = childs[j];
       const uuid = child.getAttribute('uuid');
       const widget = getWidgetByUUID(uuid);
-      widgets.push(widget);
+      widgets.push({
+        type: widget.type,
+        uuid: widget.uuid,
+      });
     }
     containers.push({
       index: i,
@@ -481,26 +514,26 @@ function printContainers() {
     const widgetLog = [];
 
     for (let i = 0; i < items.containers.length; i++) {
-        const container = items.containers[i];
-        const widgets = container.widgets || [];
+      const container = items.containers[i];
+      const widgets = container.widgets || [];
 
-        for (let j = 0; j < widgets.length; j++) {
-            const widget = widgets[j];
-            const widgetUUID = widget.uuid;
+      for (let j = 0; j < widgets.length; j++) {
+        const widget = widgets[j];
+        const widgetUUID = widget.uuid;
 
-            widgetLog.push({
-                containerIndex: i,
-                widgetIndex: j,
-                widgetUUID: widgetUUID,
-                widgetType: widget.type
-            });
-        }
+        widgetLog.push({
+          containerIndex: i,
+          widgetIndex: j,
+          widgetUUID: widgetUUID,
+          widgetType: widget.type,
+        });
+      }
     }
 
     console.table(widgetLog);
-});
+  });
 }
- 
+
 function initContainers() {
   chrome.storage.local.get(['containers'], (items) => {
     console.log('items', items);
@@ -562,6 +595,29 @@ function initContainers() {
         ],
       });
     }
+  });
+}
+
+function addToContainer(containerIndex, widget) {
+  chrome.storage.local.get(['containers'], (items) => {
+    const containers = items.containers;
+    containers[containerIndex].widgets.push(widget);
+    setContainers({ containers: containers });
+  });
+}
+
+function removeFromContainer(widgetUUID) {
+  chrome.storage.local.get(['containers'], (items) => {
+    const containers = items.containers;
+    for (let container of containers) {
+      for (let i = 0; i < container.widgets.length; i++) {
+        if (container.widgets[i].uuid === widgetUUID) {
+          container.widgets.splice(i, 1);
+          break;
+        }
+      }
+    }
+    setContainers({ containers: containers });
   });
 }
 
@@ -732,6 +788,9 @@ function clearFeed() {
     if (aside) {
       aside.style.display = 'none';
     }
+
+    setWidgetContainerManager();
+
     const _feed = document.querySelector('.application-main > div > div');
     _feed.style.width = '100%';
     if (_feed) {
