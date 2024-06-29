@@ -1,6 +1,5 @@
 function getNewWidgetWidget(uuid) {
   const widgetId = uuid;
-  
 
   addCustomCSS(`
     .aad-custom-widget-new-widget-container {
@@ -57,6 +56,26 @@ function getNewWidgetWidget(uuid) {
 
   buttonRefs.new.addEventListener('click', () => {
     const { close } = aad_loading(uuid);
+    setTimeout(() => {
+      close();
+      createModal('Loading', {}, ({ closeModal }) => {
+        const _refs = {};
+        const modal = render(
+          _refs,
+          `
+        <div>
+          <span>New Widget Page (WIP)</span>
+        </div>
+        `
+        );
+        return modal;
+      });
+      return {
+        close: () => {
+          _closeModal();
+        },
+      };
+    }, 4000);
   });
 
   inner.aadAppendChild(profile);
@@ -65,3 +84,5 @@ function getNewWidgetWidget(uuid) {
 
   return test;
 }
+
+loadNewWidget('newWidget', getNewWidgetWidget);

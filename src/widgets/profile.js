@@ -112,3 +112,5 @@ function getProfileWidget(uuid) {
 
   return widget;
 }
+
+loadNewWidget('profile', getProfileWidget);

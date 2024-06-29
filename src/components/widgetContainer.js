@@ -3,7 +3,7 @@ function applyWidgetResponsibility() {
   if (oldCSS) oldCSS.remove();
 
   const dynamicWidth =
-    widgetResponsibility.horizontalCount == 3
+    widgetResponsibility.currentCount() == 3
       ? `.add-custom-feed [data-widget-index="3"] {
         grid-column: span 3 / span 3;
       }`
@@ -17,12 +17,15 @@ function applyWidgetResponsibility() {
 
   .feed-background {
     /* width: 100dvw; */
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
   .add-custom-feed {
     display: grid;
     padding: 10px;
-    grid-template-columns: repeat(${widgetResponsibility.horizontalCount}, 1fr);
+    grid-template-columns: repeat(${widgetResponsibility.currentCount()}, 1fr);
     grid-template-rows: min-content;
     grid-column-gap: 10px;
     grid-row-gap: 10px;
@@ -35,31 +38,30 @@ function applyWidgetResponsibility() {
     overflow: hidden;
   }
   
-  @media (max-width: ${widgetResponsibility.breaks.sm.min_px}) {
+  @media (max-width: ${widgetResponsibility.breaks.sm.max_px}) {
     .add-custom-feed {
-      grid-template-columns: repeat(1, minmax(0, 1fr));
+      grid-template-columns: repeat(${widgetResponsibility.breaks.sm.count}, minmax(0, 1fr));
     }
+
+    ${widgetResponsibility.breaks.sm.count == 3 ? dynamicWidth : ''}
   }
   
-  @media (min-width: ${widgetResponsibility.breaks.sm.min_px}) and (max-width: ${widgetResponsibility.breaks.md.max_px}) {
+  @media (min-width: ${widgetResponsibility.breaks.sm.max_px}) and (max-width: ${widgetResponsibility.breaks.md.max_px}) {
     .add-custom-feed {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(${widgetResponsibility.breaks.md.count}, minmax(0, 1fr));
     }
+
+    ${widgetResponsibility.breaks.md.count == 3 ? dynamicWidth : ''}
   }
   
   
   @media (min-width: ${widgetResponsibility.breaks.lg.min_px}) {
     .add-custom-feed {
-      grid-template-columns: repeat(${widgetResponsibility.horizontalCount}, minmax(0, 1fr));
+      grid-template-columns: repeat(${widgetResponsibility.currentCount()}, minmax(0, 1fr));
     }
 
     ${dynamicWidth}
   }
-
-  /*
-      grid-template-columns: repeat(${widgetResponsibility.horizontalCount}, minmax(0, 1fr));
-      */
-  
 
   .aad-widget-container-wrapper {
     min-height: 2rem;
@@ -86,6 +88,9 @@ function applyWidgetResponsibility() {
 
   const event = new CustomEvent('onWidgetsStyled', {  });
   document.dispatchEvent(event);
+
+  const globalInput = document.querySelector('#aad-global-lg-count-input');
+  if (globalInput) globalInput.value = widgetResponsibility.breaks.lg.count;
 }
 
 function getWidgetContainer() {
@@ -100,7 +105,7 @@ function getWidgetContainer() {
       `
   );
 
-  for (let i = 0; i < widgetResponsibility.horizontalCount; i++) {
+  for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {
     const feedCardRefs = {};
     const { refs:cardRefs, node: feedCard } = GitHubCard(
       render(

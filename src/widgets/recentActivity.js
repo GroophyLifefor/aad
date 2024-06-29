@@ -83,7 +83,11 @@ function getRecentActivityWidget(uuid) {
           }" class="${prefix}-card-avatar" width="20px" height="20px" alt="card owner avatar" />
         </div>
         <div class="${prefix}-card-body">
-          <span>${data.body}</span>
+          ${
+            data.body
+              ? `<span>${data.body}</span>`
+              : `<span style="color: #778491;">This ${activity.type} does not have a description.</span>`
+          }
         </div>
       </div>
       `
@@ -96,12 +100,12 @@ function getRecentActivityWidget(uuid) {
         title: 'Preview',
         url: url,
         selector: (doc) => doc.querySelector('.js-quote-selection-container'),
-        prefix: prefix+'-modal-preview',
+        prefix: prefix + '-modal-preview',
         //onLoad: aad_sleep(5000),
         onLoaded: () => {
           close();
-        }
-      })
+        },
+      });
     });
 
     const arr = ['pull_request', 'issue', 'issue', 'test'];
@@ -109,7 +113,6 @@ function getRecentActivityWidget(uuid) {
     arr.forEach((item) => {
       if (!uniques.includes(item)) uniques.push(item);
     });
-
 
     return card;
   }
@@ -228,3 +231,5 @@ function getRecentActivityWidget(uuid) {
 
   return widget;
 }
+
+loadNewWidget('recentActivity', getRecentActivityWidget);

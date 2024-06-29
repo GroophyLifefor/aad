@@ -87,10 +87,10 @@ function createWidget(inner, config) {
           </div>
           <div class="aad-custom-align-center">
             ${SVG.draggable('16px', '16px')}
-            <span>${config.title} - [${widgetCount}]</span>
+            <span ref="title">${config.title} - [${widgetCount}]</span>
           </div>
           <div class="aad-custom-widget-${config.type}-right">
-            <div class="aad-custom-widget-${config.type}-close">
+            <div class="aad-custom-widget-${config.type}-close" ref="settings">
               ${SVG.settings('12px', '12px')}
             </div>
             <div class="aad-custom-widget-${config.type}-close" ref="close">
@@ -106,14 +106,33 @@ function createWidget(inner, config) {
   const container = widgetRefs.container;
   const _inner = widgetRefs.inner;
 
+  widgetRefs.settings.addEventListener('click', () => {
+    const widget = getWidgetByUUID(widgetId);
+    settingsCard(
+      {
+        title: 'Edit widget config',
+      },
+      widgetReferences[config.type].editModal?.properties || [],
+      widget?.config?.public || {},
+      (newConfig) => {
+        // TODO: update widget config
+        console.error('TODO: update widget config');
+        document.body.innerHTML = 'TODO: update widget config';
+        alert('TODO: update widget config');
+        throw new Error('TODO: update widget config');
+      }
+    );
+  });
+
   widgetRefs.close.addEventListener('click', () => {
     createModal('Are you sure?', {}, ({ closeModal }) => {
       const uuid = generateUUID();
+      const prefix = prefixer('deleteWidget', uuid, 'component');
       addCustomCSS(`
-        .${uuid} {
+        .${prefix('container')} {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 24px;
         }
         `);
 
@@ -121,11 +140,11 @@ function createWidget(inner, config) {
       const modal = render(
         _refs,
         `
-        <div class="${uuid}">
+        <div class="${prefix('container')}">
           <span>
             You are about to completely destroy the current widget, are you sure you want to do that?
           </span>
-          <button ref="delete" id="dialog-show-repo-delete-menu-dialog" data-show-dialog-id="repo-delete-menu-dialog" type="button" data-view-component="true" class="js-repo-delete-button Button--danger Button--medium Button float-none float-sm-right ml-0 ml-md-3 mt-2 mt-md-0">  <span class="Button-content">
+          <button ref="delete" id="dialog-show-repo-delete-menu-dialog" data-show-dialog-id="repo-delete-menu-dialog" type="button" data-view-component="true" class="js-repo-delete-button Button--danger Button--medium Button float-none float-sm-right ml-0 mt-2 mt-md-0">  <span class="Button-content">
             <span class="Button-label">Delete this widget</span>
           </span>
         </button>
@@ -134,8 +153,11 @@ function createWidget(inner, config) {
       );
 
       _refs.delete.addEventListener('click', () => {
-        removeFromContainer(container);
+        removeFromContainer(widgetId);
         closeModal();
+        setTimeout(() => {
+          window.location.reload();
+        }, 200);
       });
 
       return modal;
@@ -156,14 +178,19 @@ function createWidget(inner, config) {
   container.addEventListener('dragstart', boxStartDrag);
   container.addEventListener('dragend', boxEndDrag);
 
+  function updateTitle(newTitle) {
+    widgetRefs.title.innerHTML = `${newTitle} - [${widgetCount}]`;
+  }
+
   return {
     widget: widgetContainer,
     inner: _inner,
+    updateTitle,
   };
 }
 
 function prefixer(title, uuid, type) {
-  const allowed = ['widget', 'loading'];
+  const allowed = ['widget', 'loading', 'component'];
   if (allowed.indexOf(type) === -1) {
     throw new Error(
       "AAD WIDGET HANDLER CUSTOM ERROR: Prefixer not supported for this type. (type: '" +

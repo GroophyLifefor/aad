@@ -1,13 +1,61 @@
 function createModal(title, config, modalFactory) {
   const body = document.querySelector('body');
 
-  if (typeof config.close === 'undefined') {
-    config.close = true;
-  }
+  const positions = {
+    topLeft: {
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start',
+    },
+    topCenter: {
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+    },
+    topRight: {
+      justifyContent: 'flex-end',
+      alignItems: 'flex-start',
+    },
+    centerLeft: {
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+    },
+    center: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    centerRight: {
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    },
+    bottomLeft: {
+      justifyContent: 'flex-start',
+      alignItems: 'flex-end',
+    },
+    bottomCenter: {
+      justifyContent: 'center',
+      alignItems: 'flex-end',
+    },
+    bottomRight: {
+      justifyContent: 'flex-end',
+      alignItems: 'flex-end',
+    },
+  };
 
-  if (typeof config.ms === 'undefined') {
-    config.ms = 300;
-  }
+  const defaultConfig = {
+    close: true,
+    header: true,
+    ms: 300,
+    padding: '8px',
+    position: 'center',
+    globalMargins: {
+      top: '0px',
+      right: '0px',
+      bottom: '0px',
+      left: '0px',
+    }
+  };
+
+  config = Object.assign({}, defaultConfig, config);
+
 
   const refs = {};
   const modalContainer = render(
@@ -15,7 +63,10 @@ function createModal(title, config, modalFactory) {
     `
     <div ref="container" class="aad-custom-component-create-modal-container">
         <div class="aad-custom-component-create-modal-divider">
-            <div class="aad-custom-component-create-modal-title-container">
+            ${
+              config.header
+                ? `
+              <div class="aad-custom-component-create-modal-title-container">
                 <h4>${title}</h4>
                 ${
                   config?.close
@@ -25,7 +76,9 @@ function createModal(title, config, modalFactory) {
                   </div>`
                     : ''
                 }
-            </div>
+            </div>`
+                : ''
+            }
             <div class="aad-custom-component-create-modal-inner" ref="inner"></div>
         </div>
     </div>
@@ -66,8 +119,8 @@ function createModal(title, config, modalFactory) {
         width: 100%;
         height: 100dvh;
         display: flex;
-        justify-content: center;
-        align-items: center;
+        justify-content: ${positions[config.position].justifyContent};
+        align-items: ${positions[config.position].alignItems};
         z-index: 1000;
         animation: fadeIn ${config.ms}ms ease-in-out forwards;
     }
@@ -78,9 +131,10 @@ function createModal(title, config, modalFactory) {
         gap: 8px;
         background-color: #282f38;
         border-radius: 4px;
-        padding: 8px;
+        padding: ${config.padding};
         max-width: 80dvw;
         max-height: 80dvh;
+        margin: ${config.globalMargins.top || '0px'} ${config.globalMargins.right || '0px'} ${config.globalMargins.bottom || '0px'} ${config.globalMargins.left || '0px'};
     }
 
     .aad-custom-component-create-modal-title-container {
