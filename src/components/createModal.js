@@ -91,11 +91,7 @@ function createModal(title, config, modalFactory) {
     );
     setTimeout(() => {
       config?.cssUUIDs?.forEach((uuid) => {
-        let $_ = null;
-        try {
-          $_ = document.querySelector(`[data-uuid="${uuid}"]`);
-        } catch {}
-        $_?.remove();
+        removeCustomCSS(uuid);
       });
       modalContainer.remove();
     }, config.ms);
@@ -121,7 +117,7 @@ function createModal(title, config, modalFactory) {
         display: flex;
         justify-content: ${positions[config.position].justifyContent};
         align-items: ${positions[config.position].alignItems};
-        z-index: 1000;
+        z-index: ${zIndex.modal};
         animation: fadeIn ${config.ms}ms ease-in-out forwards;
     }
 

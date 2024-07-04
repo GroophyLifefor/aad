@@ -22,6 +22,7 @@
       "matches": ["https://*.github.com/*"],
       "js": [
         "src/utils/svg.js",
+        "src/utils/css.js",
         "src/utils/widgetResponsibility.js",
         "src/utils/pat.js",
         "src/utils/render.js",
@@ -42,15 +43,16 @@
         "src/components/widgetContainerManager.js",
         "src/components/settings/settingsCard.js",
         "src/components/loading.js",
-        "src/components/statusBar.js",
         "src/components/frameModal.js",
         "src/components/githubCard.js",
+        "src/components/notificationManager.js",
 
         "src/widgets/profile.js",
         "src/widgets/recentActivity.js",
         "src/widgets/newWidget.js",
         "src/widgets/trending.js",
         "src/widgets/todo.js",
+        "src/widgets/entries.js",
 
         "src/app.js"
       ]

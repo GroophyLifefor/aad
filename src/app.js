@@ -6,7 +6,7 @@ const aad_site_url = window.location.href;
  * TODO       New widgets widget
  * SEMI-DONE  Settings of widgets (config.public)
  * TODO       Global Notification
-*/
+ */
 
 function loadWidgets() {
   chrome.storage.local.get(['containers'], (items) => {
@@ -53,14 +53,29 @@ async function main() {
 
   const widgetContainer = getWidgetContainer();
   const remainingTokens = getRemainingTokens();
-  const statusBar = getStatusBar();
+  const notificationManager = getNotificationManager();
 
   _feed.aadAppendChild(remainingTokens);
-  // _feed.aadAppendChild(statusBar);
+  document.body.aadAppendChild(notificationManager);
   _feed.aadAppendChild(widgetContainer);
 
   loadWidgets();
   printContainers();
+
+  let i = 0;
+  aad_repeatlyCall(
+    () => {
+      sendNewNotification('Hello World' + i, { type: 'info',
+        timeout: 3000,
+       });
+      i++;
+    },
+    {
+      times: 5,
+      start_ms: 500,
+      type: 'linear',
+    }
+  );
 
   // setWidgetLgCount(3);
 }

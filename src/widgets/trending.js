@@ -120,7 +120,7 @@ function getTrendingWidget(uuid) {
 
       const { refs: buttonRefs, node } = getLoadMoreButton();
       buttonRefs.button.addEventListener('click', () => {
-        applyJS(renderCount + 3);
+        applyJS(renderCount * 2);
       });
 
       trending.appendChild(node);

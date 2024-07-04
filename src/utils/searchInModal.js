@@ -58,17 +58,7 @@ function _openSearchInModalModal(searchType, parameters) {
   });
 }
 
-const debounce = (callback, wait) => {
-  let timeoutId = null;
-  return (...args) => {
-    window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => {
-      callback(...args);
-    }, wait);
-  };
-}
-
-const openSearchInModalModal = debounce((searchType, parameters) => {
+const openSearchInModalModal = aad_debounce((searchType, parameters) => {
   _openSearchInModalModal(searchType, parameters);
 }, 250);
 

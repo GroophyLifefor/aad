@@ -97,6 +97,14 @@ function initContainers() {
                 },
               },
               {
+                type: 'entries',
+                uuid: generateUUID(),
+                config: {
+                  public: {},
+                  private: {},
+                },
+              },
+              {
                 type: 'newWidget',
                 uuid: generateUUID(),
                 config: {

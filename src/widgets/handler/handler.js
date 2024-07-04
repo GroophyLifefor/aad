@@ -132,7 +132,8 @@ function createWidget(inner, config) {
         .${prefix('container')} {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 12px;
+          padding: 8px;
         }
         `);
 

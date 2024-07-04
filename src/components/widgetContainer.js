@@ -1,6 +1,5 @@
 function applyWidgetResponsibility() {
-  const oldCSS = document.querySelector(`[data-uuid="${widgetResponsibility.uuid}"]`);
-  if (oldCSS) oldCSS.remove();
+  removeCustomCSS(widgetResponsibility.uuid);
 
   const dynamicWidth =
     widgetResponsibility.currentCount() == 3
@@ -71,7 +70,7 @@ function applyWidgetResponsibility() {
     padding: 4px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 24px;
   }
 
   .aad-widget-container-wrapper[drop-hover] {
@@ -88,9 +87,6 @@ function applyWidgetResponsibility() {
 
   const event = new CustomEvent('onWidgetsStyled', {  });
   document.dispatchEvent(event);
-
-  const globalInput = document.querySelector('#aad-global-lg-count-input');
-  if (globalInput) globalInput.value = widgetResponsibility.breaks.lg.count;
 }
 
 function getWidgetContainer() {

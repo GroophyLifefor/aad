@@ -41,6 +41,7 @@ function getTodoWidget(uuid) {
     addCustomCSS(`
       .${prefix('group')} {
         padding-left: 8px;
+        position: relative;
       }
 
       .${prefix('container')} {
@@ -324,7 +325,7 @@ function getTodoWidget(uuid) {
       padding: 6px 8px;
       border-radius: 8px;
       outline: none;
-      width: 80px;
+      width: 100px;
     }
 
       .${prefix('new-todo-end-date-text')} {
@@ -337,6 +338,33 @@ function getTodoWidget(uuid) {
         font-weight: 500;
 
     }
+
+      .${prefix('refresh-container')} {
+        position: absolute; 
+        top: 0;
+        right: 0;
+        padding: 8px;
+        cursor: pointer;
+    }
+
+    .${prefix('refresh-container')}:hover {
+      filter: brightness(0.8);
+    }
+
+      .${prefix('new-todo-color')} {
+        position: absolute;
+        right: 0;
+        margin-right: 8px;
+      }
+
+      .${prefix('new-todo-color')} input {
+        width: 24px;
+        height: 24px;
+        background-color: transparent;
+        cursor: pointer;
+        outline: none;
+        border: none;
+      }
       
       `);
 
@@ -368,6 +396,9 @@ function getTodoWidget(uuid) {
       refs,
       `
         <div class="${prefix('group')}">
+          <div ref="refresh" class="${prefix('refresh-container')}">
+            ${SVG.refresh('20px', '20px')}
+          </div>
           <div class="${prefix('container')}">
             ${todos
               .map((todo, index) => {
@@ -375,7 +406,24 @@ function getTodoWidget(uuid) {
 
                 let dateObject = new Date(todo.endDate);
                 let currentDate = new Date();
+                let farAsDays = Math.floor(
+                  (dateObject - currentDate) / (1000 * 60 * 60 * 24)
+                );
                 let isExpired = dateObject < currentDate;
+                const colorData = {
+                  expired: '#a74b47',
+                  upcoming: '#a9ae15',
+                  default: '#66727d',
+                }
+
+                const state =
+                  farAsDays === -1
+                    ? 'upcoming'
+                    : isExpired
+                    ? 'expired'
+                    : 'default';
+
+                const color = colorData[state];
 
                 return `
                 <div todo-uuid="${todo.uuid}">
@@ -389,10 +437,10 @@ function getTodoWidget(uuid) {
                 }</span>
                 <div class="${prefix('details')}">
                   <div class="${prefix('details-date')}">
-                    ${SVG.calendar('16px', '16px', isExpired ? '#a74b47' : '#66727d')}
-                    <span style="${isExpired ? 'color: #a74b47;' : ''}">${todo.endDate}</span>
+                    ${SVG.calendar('16px', '16px', color)}
+                    <span style="color: ${color};">${todo.endDate}${state === 'upcoming' ? ' (upcoming)' : ''}${state === 'expired' ? ' (expired)' : ''}</span>
                   </div>
-                  <span>·</span>
+                  ${todo.badges.length > 0 ? '<span>·</span>' : ''}
                   <div class="${prefix('badges')}">
                     ${todo.badges
                       .map((badge) => {
@@ -441,6 +489,9 @@ function getTodoWidget(uuid) {
                     <div class="${prefix('new-todo-end-date-text')}">
                       <span>End date:</span>
                     </div>
+                    <div class="${prefix('new-todo-color')}">
+                      <input ref="color" value="${getRandomColor()}" type="color" />
+                    </div>
                     <input ref="date" type="date" />
                     <input ref="badge" type="text" placeholder="Badge" />
                   </div>
@@ -455,6 +506,20 @@ function getTodoWidget(uuid) {
         </div>
         `
     );
+
+    function getTomorrowsDate() {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      const year = tomorrow.getFullYear();
+      const month = (tomorrow.getMonth() + 1).toString().padStart(2, '0');
+      const day = tomorrow.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    refs.date.value = getTomorrowsDate();
+
+    refs.refresh.addEventListener('click', execute);
 
     const toggle = () => {
       if (refs.newTodoContainer.classList.contains(prefix('close'))) {
@@ -500,7 +565,7 @@ function getTodoWidget(uuid) {
       if (badge) {
         badges.push({
           text: badge,
-          backgroundColor: getRandomColor(),
+          backgroundColor: refs.color.value,
         });
       }
 
@@ -530,36 +595,39 @@ function getTodoWidget(uuid) {
     const newTodos = todos.filter((todo) => !todo.isCompleted);
     setConfigByUUID(uuid, { public: { todos: newTodos } });
 
-    const attachListeners = () => {
-      const newContainer = document.querySelector(
-        `.${prefix('new-container')}`
-      );
-      console.log('looking for newContainer');
-      if (!!newContainer) {
-        console.log('newContainer found');
+    // TODO: REPEATLY CALL UTILS FUNCTION
+
+    aad_repeatlyCall(
+      () => {
+        const newContainer = document.querySelector(
+          `.${prefix('new-container')}`
+        );
+        if (!newContainer) return false;
+
         todos.forEach((todo) => {
           const uuid = todo.uuid;
           if (todo.isCompleted) return;
           const $parent = document.querySelector(`div[todo-uuid="${uuid}"]`);
           const $checkbox = $parent.querySelector('input[type="checkbox"]');
 
-          $checkbox.addEventListener('change', () => {
-            console.log('checkbox changed', uuid, $checkbox.checked);
+          $checkbox.addEventListener('change', (e) => {
             const newTodos = todos.map((todo) => {
               if (todo.uuid === uuid) {
                 todo.isCompleted = !todo.isCompleted;
               }
               return todo;
             });
+
             setConfigByUUID(uuid, { public: { todos: newTodos } });
           });
         });
-      } else {
-        setTimeout(attachListeners, 100);
+      },
+      {
+        times: 10,
+        start_ms: 100,
+        type: 'exponentially',
       }
-    };
-
-    attachListeners();
+    );
   }
 
   function execute() {
