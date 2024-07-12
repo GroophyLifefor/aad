@@ -110,7 +110,7 @@ function getProfileWidget(uuid) {
       inner.aadAppendChild(profile);
     });
 
-  return widget;
+  return {widget};
 }
 
 loadNewWidget('profile', getProfileWidget);

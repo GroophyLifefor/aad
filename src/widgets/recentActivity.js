@@ -118,7 +118,7 @@ function getRecentActivityWidget(uuid) {
   }
 
   const widgetId = uuid;
-  const { widget, inner } = createWidget(
+  const { widget, inner, getTitle, updateTitle } = createWidget(
     null /* Means I'll add a node later */,
     {
       title: 'Recent Activity',
@@ -208,7 +208,9 @@ function getRecentActivityWidget(uuid) {
   list.aadAppendChild(header);
 
   (async () => {
+    const title = getTitle();
     const tempGitHubRecentActivity = [...GitHubRecentActivity];
+    updateTitle(`${title} - 0/${tempGitHubRecentActivity.length}`);
 
     for (let i = 0; i < tempGitHubRecentActivity.length; i++) {
       const activity = tempGitHubRecentActivity[i];
@@ -224,12 +226,18 @@ function getRecentActivityWidget(uuid) {
         .then((res) => res.json())
         .then((data) => {
           const card = createCard(prefix, data, activity);
-          if (card) list.aadAppendChild(card);
+          if (card) {
+            list.aadAppendChild(card);
+            updateTitle(`${title} - ${i+1}/${tempGitHubRecentActivity.length}`);
+          }
         });
     }
+    setTimeout(() => {
+      updateTitle(title)
+    }, 500);
   })();
 
-  return widget;
+  return { widget };
 }
 
 loadNewWidget('recentActivity', getRecentActivityWidget);

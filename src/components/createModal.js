@@ -1,5 +1,6 @@
 function createModal(title, config, modalFactory) {
   const body = document.querySelector('body');
+  const prefix = prefixer('modal', generateUUID(), 'component');
 
   const positions = {
     topLeft: {
@@ -51,64 +52,20 @@ function createModal(title, config, modalFactory) {
       right: '0px',
       bottom: '0px',
       left: '0px',
-    }
+    },
+    maxWidth: '80dvw',
+    maxHeight: '80dvh',
   };
 
   config = Object.assign({}, defaultConfig, config);
 
-
-  const refs = {};
-  const modalContainer = render(
-    refs,
-    `
-    <div ref="container" class="aad-custom-component-create-modal-container">
-        <div class="aad-custom-component-create-modal-divider">
-            ${
-              config.header
-                ? `
-              <div class="aad-custom-component-create-modal-title-container">
-                <h4>${title}</h4>
-                ${
-                  config?.close
-                    ? `
-                  <div ref="close" class="aad-custom-component-create-modal-close-button">
-                    ${SVG.close('16px', '16px')}
-                  </div>`
-                    : ''
-                }
-            </div>`
-                : ''
-            }
-            <div class="aad-custom-component-create-modal-inner" ref="inner"></div>
-        </div>
-    </div>
-    `
-  );
-
-  const closeModal = () => {
-    refs.container.classList.add(
-      'aad-custom-component-create-modal-container-close'
-    );
-    setTimeout(() => {
-      config?.cssUUIDs?.forEach((uuid) => {
-        removeCustomCSS(uuid);
-      });
-      modalContainer.remove();
-    }, config.ms);
-  };
-
-  refs.close?.addEventListener('click', closeModal);
-
-  const modal = modalFactory({
-    closeModal: closeModal,
-  });
-
-  addCustomCSS(`
-    .aad-custom-component-create-modal-inner {
+  const modal_CSS_UUID = addCustomCSS(`
+    .${prefix('inner')} {
       overflow-y: auto;
+      overflow-x: clip;
     }
 
-    .aad-custom-component-create-modal-container {
+    .${prefix('container')} {
         position: absolute;
         top: 0;
         left: 0;
@@ -121,30 +78,34 @@ function createModal(title, config, modalFactory) {
         animation: fadeIn ${config.ms}ms ease-in-out forwards;
     }
 
-    .aad-custom-component-create-modal-divider {
+    .${prefix('divider')} {
         display: flex;
         flex-direction: column;
         gap: 8px;
         background-color: #282f38;
         border-radius: 4px;
         padding: ${config.padding};
-        max-width: 80dvw;
-        max-height: 80dvh;
-        margin: ${config.globalMargins.top || '0px'} ${config.globalMargins.right || '0px'} ${config.globalMargins.bottom || '0px'} ${config.globalMargins.left || '0px'};
+        max-width: ${config.maxWidth};
+        max-height: ${config.maxHeight};
+        margin: ${config.globalMargins.top || '0px'} ${
+    config.globalMargins.right || '0px'
+  } ${config.globalMargins.bottom || '0px'} ${
+    config.globalMargins.left || '0px'
+  };
     }
 
-    .aad-custom-component-create-modal-title-container {
+    .${prefix('title-container')} {
         display: flex;
         justify-content: space-between;
         padding: 0px 8px;
         align-items: center;
     }
 
-    .aad-custom-component-create-modal-close-button {
+    .${prefix('close-button')} {
         cursor: pointer;
     }
 
-    .aad-custom-component-create-modal-container-close {
+    .${prefix('container-close')} {
         animation: fadeOut ${config.ms}ms ease-in-out forwards;
     }
 
@@ -174,6 +135,53 @@ function createModal(title, config, modalFactory) {
         }
     }
     `);
+
+  const refs = {};
+  const modalContainer = render(
+    refs,
+    `
+    <div ref="container" class="${prefix('container')}">
+        <div class="${prefix('divider')}">
+            ${
+              config.header
+                ? `
+              <div class="${prefix('title-container')}">
+                <h4>${title}</h4>
+                ${
+                  config?.close
+                    ? `
+                  <div ref="close" class="${prefix('close-button')}">
+                    ${SVG.close('16px', '16px')}
+                  </div>`
+                    : ''
+                }
+            </div>`
+                : ''
+            }
+            <div class="${prefix('inner')}" ref="inner"></div>
+        </div>
+    </div>
+    `
+  );
+
+  const closeModal = () => {
+    refs.container.classList.add(
+      prefix('container-close')
+    );
+    setTimeout(() => {
+      config?.cssUUIDs?.forEach((uuid) => {
+        removeCustomCSS(uuid);
+      });
+      removeCustomCSS(modal_CSS_UUID);
+      modalContainer.remove();
+    }, config.ms);
+  };
+
+  refs.close?.addEventListener('click', closeModal);
+
+  const modal = modalFactory({
+    closeModal: closeModal,
+  });
 
   refs.inner.appendChild(modal);
   refs.container.addEventListener('click', (e) => {

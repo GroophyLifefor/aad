@@ -66,7 +66,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
     return html;
   };
 
-  const typeNumber = (property) => {
+  const typeNUMBER = (property) => {
     const uuid = generateUUID();
     const pre = (title) => `${prefix('number')}-${uuid}-${title}`;
 
@@ -108,7 +108,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
         <div class="${pre('container')}">
           <div ref="minus" class="${pre('minus')}">-</div>
           <div class="${pre('input')}">
-            <input ref="input" min="1" max="4" type="number" value="${getValue(
+            <input ref="input" ${property.min ? `min="${property.min}"` : ''} ${property.max ? `max="${property.max}"` : ''} type="number" value="${getValue(
               property.field
             )}" />
           </div>
@@ -140,7 +140,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
 
     const saveNumber = () => {
       setValue(property.field, parseInt(refs.input.value));
-    }
+    };
 
     refs.minus.addEventListener('click', () =>
       setNumber(parseInt(refs.input.value) - 1)
@@ -236,14 +236,300 @@ function settingsCard(config, properties, values, onChangesSaved) {
     return html;
   };
 
-  const typeRouter = (property) => {
+  const typeGITHUB_USER = (property) => {
+    const uuid = generateUUID();
+    const pre = (title) => `${prefix('github-user')}-${uuid}-${title}`;
+
+    addCustomCSS(/*css*/ `
+      .${pre('input')} {
+        padding-left: 36px;
+      }
+
+      .${pre('user-profile-preview-container')} {
+        position: absolute;
+        height: 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-left: 8px;
+      }
+
+      .${pre('user-profile-preview')} {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
+
+      .${pre('suggestion-container')} {
+        position: absolute;
+        z-index: ${zIndex.modal + 1};
+        width: calc(100% - 32px);
+        background-color: #22272e;
+        border-radius: 8px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .${pre('suggestion-container')}:first-child {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+      }
+
+      .${pre('suggestion-container')}:last-child {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+      }
+
+      .${pre('hideable')} {
+        transition: max-height 0.3s ease-in-out;
+      }
+
+      .${pre('hide')} {
+        max-height: 0px;
+      }
+
+      .${pre('show')} {
+        max-height: 100px;
+      }
+      `);
+
+    const refs = {};
+    const html = render(
+      refs,
+      `
+      <div class="form-group mt-0 mb-3 ">
+        <div class="mb-2">
+          <label for="repo_description">${property.label}</label>
+        </div>
+        <div class="${pre('user-profile-preview-container')}">
+          <img ref="previewImage" class="${pre(
+            'user-profile-preview'
+          )}" src="" alt="User Profile" />  
+        </div>
+        <input autocomplete="one-time-code" ref="input" type="text" id="repo_description" class="${pre(
+          'input'
+        )} form-control input-contrast width-full" name="repo_description" placeholder="${
+        property.placeholder || ''
+      }" autofocus="" value="${
+        getValue(property.field) || ''
+      }" data-input-max-length="350">
+        <div ref="suggestionContainer" class="${pre(
+          'suggestion-container'
+        )} ${pre('hideable')} ${pre('hide')}">
+        </div>
+        <div ref="subFields" style="margin-left: 16px;margin-top: 4px;display:flex;flex-direction:column;">
+        </div>
+        </div>
+      `
+    );
+
+    function loadSuggestions() {
+      const keyword = refs.input.value;
+
+      if (keyword.length === 0) {
+        refs.suggestionContainer.innerHTML = '';
+        refs.previewImage.src = '';
+        return;
+      }
+
+      const image = `https://github.com/${keyword}.png`;
+      refs.previewImage.src = image;
+
+      APIRequest(`https://api.github.com/search/users?q=${keyword}&type=users`)
+        .then((response) => response.json())
+        .then((data) => {
+          refs.suggestionContainer.innerHTML = '';
+
+          const dynamic_uuid = generateUUID();
+          const p = (title) => `${pre('suggestion')}-${dynamic_uuid}-${title}`;
+
+          addCustomCSS(/*css*/ `
+            .${p('container')} {
+              display: flex;
+              gap: 8px;
+              padding: 5px 12px 5px 5px;
+              cursor: pointer;
+              align-items: center;
+            }
+
+            .${p('container')}:hover {
+              background-color: #2d333b;
+            }
+            `);
+
+          let i = 0;
+          data.items.forEach((user) => {
+            if (i >= 10) return;
+            const userRefs = {};
+            const userHTML = render(
+              userRefs,
+              `
+              <div ref="container" class="${p('container')}">
+                <img src="${
+                  user.avatar_url
+                }" alt="User Profile" style="width: 20px; height: 20px; border-radius: 50%;">
+                <span>${user.login}</span>
+              </div>
+              `
+            );
+
+            userRefs.container.addEventListener('click', () => {
+              refs.input.setAttribute('value', user.login);
+              refs.input.value = user.login;
+              setValue(property.field, user.login);
+              refs.previewImage.src = user.avatar_url;
+              refs.suggestionContainer.classList.remove(`${pre('show')}`);
+              refs.suggestionContainer.classList.add(`${pre('hide')}`);
+              loadSuggestions();
+            });
+
+            refs.suggestionContainer.aadAppendChild(userHTML);
+            i++;
+          });
+        });
+    }
+
+    const callLoadSuggestions = aad_debounce(() => {
+      loadSuggestions();
+    }, 400);
+
+    loadSuggestions();
+
+    refs.input.addEventListener('focus', () => {
+      refs.suggestionContainer.classList.remove(`${pre('hide')}`);
+      refs.suggestionContainer.classList.add(`${pre('show')}`);
+    });
+
+    refs.input.addEventListener('blur', () => {
+      setTimeout(() => {
+        refs.suggestionContainer.classList.remove(`${pre('show')}`);
+        refs.suggestionContainer.classList.add(`${pre('hide')}`);
+      }, 200);
+    });
+
+    refs.input.addEventListener('input', () => {
+      setValue(property.field, refs.input.value);
+      callLoadSuggestions();
+    });
+
+    if (property.subfields) {
+      property.subfields.forEach((subField) => {
+        const subfield = render(
+          null,
+          `
+          <div style="display: flex; justify-content: space-between; gap: 24px;">
+            <span>${subField.label}</span>
+            <span class="Link--secondary">${getValue(subField.field)}</span>
+          </div>`
+        );
+        refs.subFields.aadAppendChild(subfield);
+      });
+    }
+
+    return html;
+  };
+
+  const typeSELECT = (property) => {
+    const uuid = generateUUID();
+    const pre = (title) => `${prefix('select')}-${uuid}-${title}`;
+
+    addCustomCSS(`
+      .${pre('input')} {
+        padding: 5px 12px;
+        background-color: #2d333b;
+        border-radius: 8px;
+      }
+      `);
+
+    const refs = {};
+    const html = render(
+      refs,
+      `
+      <div class="form-group mt-0 mb-3 ">
+        <div class="mb-2">
+          <label >${property.label}</label>
+        </div>
+        <select ref="input" class="${pre('input')}">
+          ${property.options.map(option => {
+            let isSelected = false;
+            if (option.value === getValue(property.field)) {
+              isSelected = true;
+            }
+            return `<option value="${option.value}" ${isSelected ? 'selected' : ''}>${option.label}</option>`
+          })}
+        </select>
+        <div ref="subFields" style="margin-left: 16px;margin-top: 4px;display:flex;flex-direction:column;">
+        </div>
+      </div>
+      `
+    );
+
+    refs.input.addEventListener('input', () => {
+      setValue(property.field, refs.input.value);
+    });
+
+    if (property.subfields) {
+      property.subfields.forEach((subField) => {
+        const subfield = render(
+          null,
+          `
+          <div style="display: flex; justify-content: space-between; gap: 24px;">
+            <span>${subField.label}</span>
+            <span class="Link--secondary">${getValue(subField.field)}</span>
+          </div>`
+        );
+        refs.subFields.aadAppendChild(subfield);
+      });
+    }
+
+    return html;
+  };
+
+  const typeWIDE_BUTTON = (property, config) => {
+    const refs = {};
+    const html = render(
+      refs,
+      `
+      <div class="" style="width: 100%;">
+        <button ref="button" style="width: 100%;" class="btn btn-primary">${property.text}</button>
+        <div ref="subFields" style="margin-left: 16px;margin-top: 4px;display:flex;flex-direction:column;">
+        </div>
+      </div>
+      `
+    );
+
+    refs.button.addEventListener('click', () => {
+      property.onClick({
+        closeModal: config.closeModal
+      });
+    });
+
+    if (property.subfields) {
+      property.subfields.forEach((subField) => {
+        const subfield = render(
+          null,
+          `
+          <div style="display: flex; justify-content: space-between; gap: 24px;">
+            <span>${subField.label}</span>
+            <span class="Link--secondary">${getValue(subField.field)}</span>
+          </div>`
+        );
+        refs.subFields.aadAppendChild(subfield);
+      });
+    }
+
+    return html;
+  };
+
+  const typeRouter = (property, config) => {
     if (property.type === 'text') {
       const html = typeTEXT(property);
       return html;
     }
 
     if (property.type === 'number') {
-      const html = typeNumber(property);
+      const html = typeNUMBER(property);
       return html;
     }
 
@@ -251,6 +537,30 @@ function settingsCard(config, properties, values, onChangesSaved) {
       const html = typeGROUP(property);
       return html;
     }
+
+    if (property.type === 'github_user') {
+      const html = typeGITHUB_USER(property);
+      return html;
+    }
+
+    if (property.type === 'select') {
+      const html = typeSELECT(property);
+      return html;
+    }
+
+    if (property.type === 'wide-button') {
+      const html = typeWIDE_BUTTON(property, config);
+      return html;
+    }
+
+    sendNewNotification(
+      `Unknown property type: ${property.type}, in settings card.`,
+      {
+        type: 'error',
+        timeout: 5000,
+      }
+    );
+    return null;
   };
 
   createModal(
@@ -314,6 +624,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
         display: flex;
         flex-direction: column;
         gap: 16px;
+        position: relative;
       } 
         `);
 
@@ -356,8 +667,10 @@ function settingsCard(config, properties, values, onChangesSaved) {
       });
 
       properties.forEach((property) => {
-        const html = typeRouter(property);
-        settingsRefs.inner.aadAppendChild(html);
+        const html = typeRouter(property, {
+          closeModal: closeModal,
+        });
+        if (!!html) settingsRefs.inner.aadAppendChild(html);
       });
 
       if (properties.length === 0) {

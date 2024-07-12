@@ -1,4 +1,25 @@
 let aad_containers = [];
+/**
+ * heightType: 'fit' | 'sameHeight' | 'sameHeightWithMinDVH'
+ */
+let containerSettings = {
+  heightType: 'fit'
+};
+
+function tryLoadContainerSettings() {
+  chrome.storage.local.get(['containerSettings'], (items) => {
+    if (!!items.containerSettings) {
+      updateContainerSettings(items.containerSettings);
+    }
+  });
+}
+
+function updateContainerSettings(settings) {
+  containerSettings = settings;
+  chrome.storage.local.set({ containerSettings: settings }, () => {});
+  const event = new CustomEvent('onContainerSettingsUpdated', {  });
+  document.dispatchEvent(event);
+}
 
 function setContainers(containers) {
   chrome.storage.local.set(containers, () => {});
@@ -54,6 +75,8 @@ function removeFromContainer(widgetUUID) {
 }
 
 function initContainers() {
+  tryLoadContainerSettings();
+
   chrome.storage.local.get(['containers'], (items) => {
     console.log('items', items);
     if (!!items.containers) {
@@ -69,14 +92,6 @@ function initContainers() {
             widgets: [
               {
                 type: 'profile',
-                uuid: generateUUID(),
-                config: {
-                  public: {},
-                  private: {},
-                },
-              },
-              {
-                type: 'newWidget',
                 uuid: generateUUID(),
                 config: {
                   public: {},
@@ -104,14 +119,6 @@ function initContainers() {
                   private: {},
                 },
               },
-              {
-                type: 'newWidget',
-                uuid: generateUUID(),
-                config: {
-                  public: {},
-                  private: {},
-                },
-              },
             ],
           },
           {
@@ -125,14 +132,6 @@ function initContainers() {
                   private: {},
                 },
               },
-              {
-                type: 'newWidget',
-                uuid: generateUUID(),
-                config: {
-                  public: {},
-                  private: {},
-                },
-              },
             ],
           },
           {
@@ -140,14 +139,6 @@ function initContainers() {
             widgets: [
               {
                 type: 'todo',
-                uuid: generateUUID(),
-                config: {
-                  public: {},
-                  private: {},
-                },
-              },
-              {
-                type: 'newWidget',
                 uuid: generateUUID(),
                 config: {
                   public: {},

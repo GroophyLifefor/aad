@@ -1,16 +1,27 @@
 function GitHubCard(child, config) {
+  const uuid = generateUUID();
+  const prefix = prefixer('github-card', uuid, 'component');
+
   addCustomCSS(`
-    .aad-custom-info-wrapper {
-      /*padding: 8px 0px;*/
-    }
-  
-    .aad-custom-info-wrapper-first {
+    .${prefix('wrapper-first')} {
       padding-top: 0px !important;
       padding-bottom: 0px !important;
       width: 100%;
     }
-  
-    .aad-custom-info-container {
+
+    .${prefix('fit')} {
+    }
+
+    .${prefix('sameHeight')} {
+      height: 100%;
+    }
+
+    .${prefix('sameHeightWithMinDVH')} {
+      height: 100%;
+      min-height: calc(100vh - 86px);
+    }
+
+    .${prefix('container')} {
       width: 100%;
       border-radius: 6px;
       padding: ${config['customPadding'] || '16px'};
@@ -18,9 +29,9 @@ function GitHubCard(child, config) {
       border: 1px solid #444c56;
     }
   
-    .aad-no-horiz-padding {
-      padding-left: 0px !important;
-      padding-right: 0px !important;
+    .${prefix('i-fit')} {}
+    .${prefix('i-sameHeight')}, .${prefix('i-sameHeightWithMinDVH')} {
+      height: 100%;
     }
     `);
 
@@ -28,16 +39,39 @@ function GitHubCard(child, config) {
   const parent = render(
     refs,
     `
-      <div ref="wrapper" class="aad-custom-info-wrapper ${
-        config['isFirst'] ? 'aad-custom-info-wrapper-first' : ''
+      <div ref="wrapper" class="${
+        config['isFirst'] ? prefix('wrapper-first') : ''
       }">
-        <div class="aad-custom-info-container">
-          <div ref="inner">
+        <div ref="container" class="${prefix('container')}">
+          <div ref="inner" class="${prefix('inner')}">
           </div>
         </div>
       </div>
     `
   );
+
+  function applyHeightType() {
+    /* Container settings */
+    const heightType = containerSettings.heightType;
+    refs.container.classList.remove(prefix('fit'));
+    refs.container.classList.remove(prefix('sameHeight'));
+    refs.container.classList.remove(prefix('sameHeightWithMinDVH'));
+
+    refs.container.classList.add(prefix(heightType));
+
+    /* Inner settings */
+    refs.inner.classList.remove(prefix('i-fit'));
+    refs.inner.classList.remove(prefix('i-sameHeight'));
+    refs.inner.classList.remove(prefix('i-sameHeightWithMinDVH'));
+
+    refs.inner.classList.add(prefix(`i-${heightType}`));
+  }
+
+  applyHeightType();
+
+  document.addEventListener('onContainerSettingsUpdated', applyHeightType);
+
+
   refs.inner.aadAppendChild(child);
   return { refs, node: parent };
 }

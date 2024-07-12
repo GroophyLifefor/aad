@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "AAD",
+  "name": "AAD - Highly Customizable GitHub",
   "version": "1.0",
-  "description": "GitHub interface supporter for dumb and lazy developers",
-  "permissions": ["storage", "history"],
+  "description": "GitHub interface supporter for lazy developers",
+  "permissions": ["storage"],
   "icons": {
     "16": "images/icon16.png",
     "48": "images/icon48.png",
@@ -23,6 +23,7 @@
       "js": [
         "src/utils/svg.js",
         "src/utils/css.js",
+        "src/utils/global.css.js",
         "src/utils/widgetResponsibility.js",
         "src/utils/pat.js",
         "src/utils/render.js",
@@ -40,12 +41,13 @@
         "src/components/widgetContainer.js",
         "src/components/createModal.js",
         "src/components/loadMore.js",
-        "src/components/widgetContainerManager.js",
+        "src/components/generalSettings.js",
         "src/components/settings/settingsCard.js",
         "src/components/loading.js",
         "src/components/frameModal.js",
         "src/components/githubCard.js",
         "src/components/notificationManager.js",
+        "src/components/drawer.js",
 
         "src/widgets/profile.js",
         "src/widgets/recentActivity.js",

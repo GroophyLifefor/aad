@@ -3,9 +3,10 @@ const aad_site_url = window.location.href;
 /* ----
  * DONE       Settings components (UI DONE, INPUTS WIP, LOGIC TODO)
  * DONE       Better customizeable responsibility
- * TODO       New widgets widget
- * SEMI-DONE  Settings of widgets (config.public)
- * TODO       Global Notification
+ * DONE       New widgets widget
+ * DONE       Settings of widgets (config.public)
+ * DONE       Global Notification
+ * TODO       Entries editModal
  */
 
 function loadWidgets() {
@@ -15,7 +16,7 @@ function loadWidgets() {
       if (!container) {
         const widgetUUID = generateUUID();
         const widgetFunc = widgetReferences['newWidget'].fn;
-        const widgetInstance = widgetFunc(widgetUUID);
+        const { widget: widgetInstance } = widgetFunc(widgetUUID);
         addWidget(i, widgetInstance);
 
         // save
@@ -40,9 +41,19 @@ function loadWidgets() {
         const widgetUUID = widget.uuid;
         const widgetFunc = widgetReferences[widget.type].fn;
 
-        const widgetInstance = widgetFunc(widgetUUID);
+        const { widget: widgetInstance } = widgetFunc(widgetUUID, {
+          containerIndex: i,
+        });
         addWidget(i, widgetInstance);
       }
+
+      // add newWidget
+      const widgetUUID = generateUUID();
+      const widgetFunc = widgetReferences['newWidget'].fn;
+      const { widget: widgetInstance } = widgetFunc(widgetUUID, {
+        containerIndex: i,
+      });
+      addWidget(i, widgetInstance);
     }
   });
 }
@@ -61,21 +72,6 @@ async function main() {
 
   loadWidgets();
   printContainers();
-
-  let i = 0;
-  aad_repeatlyCall(
-    () => {
-      sendNewNotification('Hello World' + i, { type: 'info',
-        timeout: 3000,
-       });
-      i++;
-    },
-    {
-      times: 5,
-      start_ms: 500,
-      type: 'linear',
-    }
-  );
 
   // setWidgetLgCount(3);
 }

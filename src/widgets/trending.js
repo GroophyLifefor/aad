@@ -15,6 +15,14 @@ function getTrendingWidget(uuid) {
   // init cache
   setConfigByUUID(uuid, { public: { url, containerQuery, itemQuery } });
 
+  function saveUrl() {
+    setConfigByUUID(uuid, { public: { url } });
+    sendNewNotification('Trending page has been saved.', {
+      type: 'success',
+      timeout: 3000,
+    });
+  }
+
   function buildTemplate() {
     addCustomCSS(`
       .${prefix('container')} {
@@ -139,6 +147,8 @@ function getTrendingWidget(uuid) {
           box = refs.container.querySelector(`.Box`);
         }
 
+        if (!box) return;
+
         const width = container.offsetWidth;
         if (width < 600) {
           if (box.classList.contains(prefix('width-mobile'))) return;
@@ -197,7 +207,7 @@ function getTrendingWidget(uuid) {
             // check is developers
             if (splitted[1] === 'trending' && splitted[2] === 'developers') {
               url = 'https://github.com/trending/developers';
-              setConfigByUUID(uuid, { public: { url } });
+              saveUrl();
               execute();
               return;
             }
@@ -205,7 +215,7 @@ function getTrendingWidget(uuid) {
             // check is trending
             if (href === '/trending') {
               url = 'https://github.com/trending';
-              setConfigByUUID(uuid, { public: { url } });
+              saveUrl();
               execute();
               return;
             }
@@ -224,7 +234,7 @@ function getTrendingWidget(uuid) {
                       loadUserPreview('https://github.com' + href);
                     } else {
                       url = 'https://github.com' + href;
-                      setConfigByUUID(uuid, { public: { url } });
+                      saveUrl();
                       execute();
                     }
                   }
@@ -264,7 +274,7 @@ function getTrendingWidget(uuid) {
   }
 
   execute();
-  return widget;
+  return {widget};
 }
 
 loadNewWidget('trending', getTrendingWidget, {

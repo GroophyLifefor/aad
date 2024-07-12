@@ -31,7 +31,6 @@ function createFrameModal(props) {
    let count = 0;
    while (!conversation && count < 20) {
      await aad_sleep(100);
-     console.log('waiting for conversation', props.url);
      conversation = props.selector(htmlDocument);
      count++;
    }

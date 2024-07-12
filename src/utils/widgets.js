@@ -4,11 +4,62 @@ function loadNewWidget(name, fn, editModal) {
   if (!widgetReferences[name]) {
     widgetReferences[name] = {
       fn,
-      editModal
+      editModal,
     };
   } else {
     console.error('AAD ERROR: Widget already exists');
   }
+}
+
+const addingWidgets = [
+  {
+    name: 'Trending',
+    validName: 'trending',
+    image: 'https://github.githubassets.com/assets/social-2deb6d7d43e7.jpg',
+    description: 'Shows Trending repositories on GitHub',
+  },
+  {
+    name: 'Profile',
+    validName: 'profile',
+    image: 'https://blog.boot.dev/img/800/github.webp',
+    description: "It's very satisfying to see yourself, isn't it?",
+  },
+  {
+    name: 'Entries',
+    validName: 'entries',
+    image:
+      'https://pspdfkit.com/assets/images/blog/2021/how-to-handle-stacked-pull-requests-on-github/article-header-4d509162.png',
+    description:
+      "If you're too busy with work, this is for you, freely manage and track issues and pull-requests.",
+  },
+  {
+    name: 'ToDo List',
+    validName: 'todo',
+    image:
+      'https://png.pngtree.com/thumb_back/fw800/background/20221206/pngtree-minimalist-todo-list-on-blue-with-coffee-and-notebook-photo-image_42011582.jpg',
+    description:
+      "You're not the only one with forgetfulness, we can make some sacrifices.",
+  },
+  {
+    name: 'Recent Activities',
+    validName: 'recentActivity',
+    image:
+      'https://www.laurencegellert.com/content/uploads/2015/05/github_contributions.png',
+    description:
+      'It is always better to live without forgetting what you did one step before.',
+  },
+];
+
+async function preloadImage(url) {
+  const img = new Image();
+  img.src = url;
+}
+
+async function preloadImages() {
+  addingWidgets.forEach(async (widget) => {
+    await preloadImage(widget.image);
+  });
+
 }
 
 function getWidgetByUUID(uuid) {
@@ -56,6 +107,10 @@ function saveWidgetPosition() {
       const child = childs[j];
       const uuid = child.getAttribute('uuid');
       const widget = getWidgetByUUID(uuid);
+      if (!widget) {
+        // may newWidget widget but if it will be null
+        continue;
+      }
       widgets.push({
         type: widget.type,
         uuid: widget.uuid,
@@ -68,4 +123,19 @@ function saveWidgetPosition() {
     });
   }
   if (isItGoingWell) setContainers({ containers: containers });
+}
+
+function createNewWidget(containerIndex, type) {
+  const widgetUUID = generateUUID();
+  const containers = aad_containers;
+  containers[containerIndex].widgets.push({
+    type,
+    uuid: widgetUUID,
+    config: {
+      public: {},
+      private: {},
+      editModal: {},
+    },
+  });
+  setContainers({ containers });
 }

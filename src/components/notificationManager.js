@@ -1,3 +1,10 @@
+/**
+ * 
+   sendNewNotification('Hello World' + i, { type: 'info',
+    timeout: 3000,
+   });
+ */
+
 const notifications = {
   showingCount: 0,
   showingLimit: 3,
@@ -5,17 +12,24 @@ const notifications = {
 };
 
 function sendNewNotification(inner, config) {
+  const uuid = generateUUID();
   const event = new CustomEvent('onNewNotification', {
     detail: {
       inner,
       config,
+      uuid,
     },
   });
   document.dispatchEvent(event);
+  return uuid;
 }
 
 function removeNotification(uuid) {
-  throw new Error('Not implemented');
+  const $notification = document.querySelector(`[data-uuid="${uuid}"]`);
+  removeNotificationByElement(
+    $notification,
+    (title) => 'aad-global-notification-remove-' + title
+  );
 }
 
 function removeNotificationByElement(element, pre) {
@@ -75,8 +89,35 @@ function getNotificationManager() {
   );
 
   document.addEventListener('onNewNotification', (e) => {
-    const notiUUID = generateUUID();
+    const defaultConfig = {
+      type: 'default',
+      timeout: null,
+      actions: [],
+    };
+
+    const config = { ...defaultConfig, ...e.detail.config };
+
+    const notiUUID = e.detail.uuid;
     const pre = (title) => prefix(notiUUID + '-' + title);
+
+    const colorsByType = {
+      info: '#2C4F86',
+      success: '#225F39',
+      warning: '#B07C13',
+      error: '#B0373A',
+      default: '#262c34',
+    };
+
+    const brightnessColorsByType = {
+      info: '#457cd2',
+      success: '#2c7f4e',
+      warning: '#e6a21c',
+      error: '#e64d4d',
+      default: '#3a414a',
+    };
+
+    const color = colorsByType[config.type] || colorsByType.default;
+
     addCustomCSS(`
       .${pre('notification')} {
         min-width: 360px;
@@ -85,7 +126,7 @@ function getNotificationManager() {
         box-sizing: border-box;
         border: 1px solid #3a414a;
         position: relative;
-        background-color: #22272eE6;
+        background-color: ${color}E6;
         transition: all 0.3s;
         animation: ${pre('fade-in')} 0.3s ease;
       }
@@ -98,7 +139,7 @@ function getNotificationManager() {
     }
 
       .${pre('notification')}:hover {
-        background-color: #262c34;
+        background-color: ${color};
         transform: translateY(-4px) translateX(4px) scale(1.05);
       }
 
@@ -142,7 +183,11 @@ function getNotificationManager() {
         line-height: 1;
       }
 
-      
+      .${pre('actions')} {  
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }      
       `);
 
     const notiRefs = {};
@@ -158,10 +203,39 @@ function getNotificationManager() {
           <div class="${pre('inner')}">
             <span class="${pre('title')}">Title</span>
             <span class="${pre('innerText')}">${e.detail.inner}</span>
+            <div ref="actions" class="${pre('actions')}"></div>
           </div>
         </div>
         `
     );
+
+    config.actions.forEach((action) => {
+      const actionUUID = generateUUID();
+      const p = (title) => pre('action-' + actionUUID + '-' + title); 
+
+      addCustomCSS(`
+        .${p('action')} {
+          background-color: ${colorsByType[action.type]};
+          border: 1px solid ${brightnessColorsByType[action.type]};
+        }
+
+        .${p('action')}:hover {
+          background-color: ${brightnessColorsByType[action.type]};
+        }
+        `);
+
+      const actionRefs = {};
+      const actionElement = render(
+        actionRefs,
+        `
+          <button ref="action" type="submit" class="btn btn-primary ${p('action')}" form="repo_metadata_form">${action.text}</button>
+          `
+      );
+
+      actionRefs.action.addEventListener('click', () => action.action());
+
+      notiRefs.actions.aadAppendChild(actionElement);
+    });
 
     notiRefs.close.addEventListener('click', () =>
       removeNotificationByElement(notiRefs.notification, pre)
@@ -169,7 +243,12 @@ function getNotificationManager() {
 
     if (!!e.detail.config.timeout) {
       setTimeout(() => {
-        removeNotificationByElement(notiRefs.notification, pre);
+        // if hovered wait mouseleave
+        if (notiRefs.notification.matches(':hover')) {
+          notiRefs.notification.addEventListener('mouseleave', () => {
+            removeNotificationByElement(notiRefs.notification, pre);
+          });
+        } else removeNotificationByElement(notiRefs.notification, pre);
       }, e.detail.config.timeout);
     }
 

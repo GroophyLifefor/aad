@@ -1,28 +1,47 @@
 function getTrendingWidget(uuid) {
-  let { widget, inner } = createWidget(CONST_IWillAddLater, {
-    title: 'Entries',
-    type: 'entries',
-    widgetId: uuid,
-  });
-  const prefix = prefixer('entries', uuid, 'widget');
-  let refs = {};
-  const widgetData = getWidgetByUUID(uuid);
-  let config = {};
-  let url = () => '';
-  let entries = [];
   const defaultConfig = {
     author: GitHubUsername,
     openType: 'open',
     entryType: 'issues & pull-requests',
     isArchived: false,
     visibilityType: 'public & private',
-    onOrganization: null,
+    onOrganization: '',
     sort: 'recently-updated',
   };
+
+  const widgetData = getWidgetByUUID(uuid);
+  let headerTitle = widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
+  let headerDescription = widgetData.config.public.headerDescription || 'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.';
+  let renderCount = widgetData.config.public.initialRenderCount || 3;
+
+  let { widget, inner } = createWidget(CONST_IWillAddLater, {
+    title: 'Entries',
+    type: 'entries',
+    widgetId: uuid,
+    onConfigChanged: () => {
+      const widgetData = getWidgetByUUID(uuid);
+      Object.keys(defaultConfig).forEach((key) => {
+        config[key] = widgetData.config.public[key] || defaultConfig[key];
+      });
+      headerTitle = widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
+      headerDescription = widgetData.config.public.headerDescription || 'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.';
+      renderCount = widgetData.config.public.initialRenderCount || 3;
+      execute(renderCount);
+    },
+  });
+  const prefix = prefixer('entries', uuid, 'widget');
+  let refs = {};
+  let config = {};
+  let url = () => '';
+  let entries = [];
 
   Object.keys(defaultConfig).forEach((key) => {
     config[key] = widgetData.config.public[key] || defaultConfig[key];
   });
+
+  config.headerTitle = headerTitle;
+  config.headerDescription = headerDescription;
+  config.initialRenderCount = renderCount;
 
   // init cache
   setConfigByUUID(uuid, { public: config });
@@ -43,7 +62,10 @@ function getTrendingWidget(uuid) {
       open: 'is:open',
       closed: 'is:closed',
       merged: 'is:merged',
-      all: 'is:open is:closed is:merged',
+      openClosed: 'is:open is:closed',
+      openMerged: 'is:open is:merged',
+      closedMerged: 'is:closed is:merged',
+      all: '',
     };
     const entryTypeConfig = {
       'issues & pull-requests': '',
@@ -56,8 +78,13 @@ function getTrendingWidget(uuid) {
       public: 'is:public',
       private: 'is:private',
     };
-    const onOrganizationConfig = () =>
-      onOrganization ? `user:${onOrganization}` : '';
+    const onOrganizationConfig = () => {
+      if (typeof onOrganization === 'string' && onOrganization.length !== 0) {
+        return `user:${onOrganization}`
+      } else {
+        return '';
+      }
+    };
     const sortConfig = {
       newest: '',
       oldest: 'sort:created-asc',
@@ -191,9 +218,15 @@ function getTrendingWidget(uuid) {
 
         endLoadingScreen();
 
-        const list = doc
-          .querySelector('.js-navigation-container')
-          .cloneNode(true);
+        const _list = doc.querySelector('.js-navigation-container');
+        if (!_list) {
+          sendNewNotification('No entries found<br />url: ' + url(1), {
+            type: 'error',
+            timeout: 3000,
+          });
+          return;
+        }
+        const list = _list.cloneNode(true);
         const childs = doc.querySelector('.js-navigation-container').children;
         list.innerHTML = '';
 
@@ -267,11 +300,11 @@ function getTrendingWidget(uuid) {
               <div class="${prefix('green-ball')}"></div>
               <span class="${prefix(
                 'header-title'
-              )}">AAD - Entries [Issues & PRs]</span>
+              )}">${headerTitle}</span>
             </div>
             <span class="${prefix(
               'header-desc'
-            )}">I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.</span>
+            )}">${headerDescription}</span>
           </div>`
         );
 
@@ -344,21 +377,19 @@ function getTrendingWidget(uuid) {
           }
           const splitted = href.split('/');
 
-          console.log('t', href, splitted);
-
           if (splitted[3] || '' === 'issues') {
             const url = 'https://github.com' + href;
-              const { close } = aad_loading(uuid);
-              createFrameModal({
-                title: 'Preview',
-                url: url,
-                selector: (doc) =>
-                  doc.querySelector('.js-quote-selection-container'),
-                prefix: prefix('modal-repository-preview'),
-                onLoaded: () => {
-                  close();
-                },
-              });
+            const { close } = aad_loading(uuid);
+            createFrameModal({
+              title: 'Preview',
+              url: url,
+              selector: (doc) =>
+                doc.querySelector('.js-quote-selection-container'),
+              prefix: prefix('modal-repository-preview'),
+              onLoaded: () => {
+                close();
+              },
+            });
           } else {
             // check is repository
             APIRequest(
@@ -373,7 +404,10 @@ function getTrendingWidget(uuid) {
                     if (res.status === 200) {
                       loadUserPreview('https://github.com' + href);
                     } else {
-                      window.open('https://github.com' + href, '_blank');
+                      sendNewNotification('Unvalid action', {
+                        type: 'error',
+                        timeout: 3000,
+                      });
                     }
                   }
                 );
@@ -392,10 +426,172 @@ function getTrendingWidget(uuid) {
     applyJS(renderCount);
   }
 
-  execute();
-  return widget;
+  execute(renderCount);
+  return {
+    widget
+  };
 }
 
 loadNewWidget('entries', getTrendingWidget, {
-  properties: [],
+  properties: [
+    {
+      type: 'group',
+      label: 'Header Content',
+      subfields: [
+        {
+          field: 'headerTitle',
+          type: 'text',
+          placeholder: 'AAD - Entries [Issues & PRs]',
+          label: 'Title of the header',
+        },
+        {
+          field: 'headerDescription',
+          type: 'text',
+          placeholder: 'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.',
+          label: 'Description of the header',
+        },
+        {
+          field: 'initialRenderCount',
+          type: 'number',
+          placeholder: '3',
+          label: 'Initial render count of entries',
+          min: 1,
+          max: 20,
+        },
+      ],
+    },
+    {
+      field: 'author',
+      type: 'github_user',
+      label: 'Entries by this author',
+    },
+    {
+      field: 'openType',
+      type: 'select',
+      label: 'Type(s) of entries',
+      options: [
+        {
+          label: 'Open',
+          value: 'open',
+        },
+        {
+          label: 'Closed',
+          value: 'closed',
+        },
+        {
+          label: 'Merged',
+          value: 'merged',
+        },
+        {
+          label: 'Open & Closed',
+          value: 'openClosed',
+        },
+        {
+          label: 'Open & Merged',
+          value: 'openMerged',
+        },
+        {
+          label: 'Closed & Merged',
+          value: 'closedMerged',
+        },
+        {
+          label: 'All (Open, Closed, Merged)',
+          value: 'all',
+        },
+      ],
+    },
+    {
+      field: 'entryType',
+      type: 'select',
+      label: 'Type(s) of entries',
+      options: [
+        {
+          label: 'Just Issues',
+          value: 'issues',
+        },
+        {
+          label: 'Just Pull-Requests',
+          value: 'pull-requests',
+        },
+        {
+          label: 'Issues & Pull-Requests (Both)',
+          value: 'issues & pull-requests',
+        },
+      ],
+    },
+    {
+      field: 'isArchived',
+      type: 'select',
+      label: 'Show Archived entries',
+      options: [
+        {
+          label: 'Yes',
+          value: true,
+        },
+        {
+          label: 'No',
+          value: false,
+        },
+      ],
+    },
+    {
+      field: 'visibilityType',
+      type: 'select',
+      label: 'Visibility of entries',
+      options: [
+        {
+          label: 'Public & Private',
+          value: 'public & private',
+        },
+        {
+          label: 'Public',
+          value: 'public',
+        },
+        {
+          label: 'Private',
+          value: 'private',
+        },
+      ],
+    },
+    {
+      field: 'onOrganization',
+      type: 'github_user',
+      label: 'Entries on this organization',
+    },
+    {
+      field: 'sort',
+      type: 'select',
+      label: 'Sort by',
+      options: [
+        {
+          label: 'Newest',
+          value: 'newest',
+        },
+        {
+          label: 'Oldest',
+          value: 'oldest',
+        },
+        {
+          label: 'Most Commented',
+          value: 'most-commented',
+        },
+        {
+          label: 'Least Commented',
+          value: 'least-commented',
+        },
+        {
+          label: 'Recently Updated',
+          value: 'recently-updated',
+        },
+        {
+          label: 'Least Recently Updated',
+          value: 'least-recently-updated',
+        },
+        {
+          label: 'Best Match',
+          value: 'best-match',
+        },
+      ],
+    },
+  ],
 });

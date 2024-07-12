@@ -412,7 +412,7 @@ function getTodoWidget(uuid) {
                 let isExpired = dateObject < currentDate;
                 const colorData = {
                   expired: '#a74b47',
-                  upcoming: '#a9ae15',
+                  upcoming: '#f1e05aE6',
                   default: '#66727d',
                 }
 
@@ -636,7 +636,9 @@ function getTodoWidget(uuid) {
   }
 
   execute();
-  return widget;
+  return {
+    widget
+  };
 }
 
 loadNewWidget('todo', getTodoWidget);

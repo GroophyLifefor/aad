@@ -5,9 +5,10 @@
 const widgetCounter = {};
 
 /**
- *
- * @param {HTMLElement} inner
- * @param {*} config
+ * 
+ * @param {*} inner 
+ * @param {*} config 
+ * @returns 
  */
 function createWidget(inner, config) {
   const widgetId = config.widgetId || generateUUID();
@@ -63,13 +64,31 @@ function createWidget(inner, config) {
       justify-content: center;
       align-items: center;
       gap: 8px;
-      cursor: pointer;
       position: absolute;
       right: 0;
     }
   
     .aad-custom-widget-${config.type}-auto-container[drop-hover] {
       /* TODO: make smoother */
+    }
+
+    .aad-custom-widget-${config.type}-settings {
+      margin-top: 2px;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+
+    .aad-custom-widget-${config.type}-close {
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+
+    .aad-custom-widget-${config.type}-settings:hover {
+      transform: scale(1.2);
+    } 
+
+    .aad-custom-widget-${config.type}-close:hover {
+      transform: scale(1.2);
     }
     `);
 
@@ -90,7 +109,7 @@ function createWidget(inner, config) {
             <span ref="title">${config.title} - [${widgetCount}]</span>
           </div>
           <div class="aad-custom-widget-${config.type}-right">
-            <div class="aad-custom-widget-${config.type}-close" ref="settings">
+            <div class="aad-custom-widget-${config.type}-settings" ref="settings">
               ${SVG.settings('12px', '12px')}
             </div>
             <div class="aad-custom-widget-${config.type}-close" ref="close">
@@ -113,13 +132,38 @@ function createWidget(inner, config) {
         title: 'Edit widget config',
       },
       widgetReferences[config.type].editModal?.properties || [],
-      widget?.config?.public || {},
+      structuredClone(widget?.config?.public || {}),
       (newConfig) => {
-        // TODO: update widget config
-        console.error('TODO: update widget config');
-        document.body.innerHTML = 'TODO: update widget config';
-        alert('TODO: update widget config');
-        throw new Error('TODO: update widget config');
+        const properties = widgetReferences[config.type].editModal?.properties;
+        function proc(property) {
+          if (['text', 'github_user', 'select', 'number'].includes(property.type)) {
+            widget.config.public[property.field] = newConfig[property.field];
+          }
+          if (property.type === 'group') {
+            property.subfields.forEach((subfield) => {
+              proc(subfield);
+            });
+          }
+        }
+        
+        properties?.forEach((property) => {
+          proc(property);
+        });
+        setConfigByUUID(widgetId, widget.config);
+        sendNewNotification('Widget config has been saved.', {
+          type: 'success',
+          timeout: 5000,
+          actions: [
+            {
+              text: 'Reload page',
+              type: 'default',
+              action: () => {
+                window.location.reload();
+              }
+            }
+          ] 
+        });
+        config.onConfigChanged?.();
       }
     );
   });
@@ -147,8 +191,8 @@ function createWidget(inner, config) {
           </span>
           <button ref="delete" id="dialog-show-repo-delete-menu-dialog" data-show-dialog-id="repo-delete-menu-dialog" type="button" data-view-component="true" class="js-repo-delete-button Button--danger Button--medium Button float-none float-sm-right ml-0 mt-2 mt-md-0">  <span class="Button-content">
             <span class="Button-label">Delete this widget</span>
-          </span>
-        </button>
+            </span>
+          </button>
         </div>
         `
       );
@@ -183,10 +227,18 @@ function createWidget(inner, config) {
     widgetRefs.title.innerHTML = `${newTitle} - [${widgetCount}]`;
   }
 
+  function getTitle() {
+    const title = widgetRefs.title.innerHTML;
+    const parts = title.split(' - ');
+    parts.pop();
+    return parts.join(' - ');
+  }
+
   return {
     widget: widgetContainer,
     inner: _inner,
     updateTitle,
+    getTitle
   };
 }
 

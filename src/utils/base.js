@@ -2,7 +2,8 @@ let GitHubUsername = '';
 const GitHubRecentActivity = [];
 const zIndex = {
   modal: 1000,
-  notification: 1010
+  drawer: 1010,
+  notification: 1020
 }
 
 /**
@@ -33,6 +34,9 @@ async function onLoad() {
   window.addEventListener('resize', () => {
     callApplyWidgetResponsibility();
   });
+
+  initGlobalCSS();
+  preloadImages();
 }
 
 /**
@@ -335,6 +339,7 @@ function prepareUsername(_feed) {
   )[1];
   if (_) {
     GitHubUsername = _.innerText.trim();
+    preloadImage(`https://github.com/${GitHubUsername}.png`);
   } else {
     throw new Error('Cannot find username.');
   }
@@ -396,7 +401,7 @@ function clearFeed() {
       aside.style.display = 'none';
     }
 
-    setWidgetContainerManager();
+    getGeneralSettingsComp();
 
     const _feed = document.querySelector('.application-main > div > div');
     _feed.style.width = '100%';
