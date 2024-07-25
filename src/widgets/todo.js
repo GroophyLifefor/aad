@@ -482,7 +482,7 @@ function getTodoWidget(uuid) {
               )} ${prefix('close')}">
                 <div class="${prefix('new-todo-contents')}">
                   <input ref="title" type="text" placeholder="Title" />
-                  <textarea ref="description" placeholder="Description"></textarea>
+                  <textarea ref="description" placeholder="Description (not required)"></textarea>
                 </div>
                 <div class="${prefix('new-todo-footer')}">
                   <div class="${prefix('new-todo-details')}">

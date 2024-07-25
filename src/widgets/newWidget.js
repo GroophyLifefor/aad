@@ -22,7 +22,7 @@ function getNewWidgetWidget(uuid, config) {
   const test = render(
     refs,
     `
-      <div id="aad-widget-new-widget-container-${widgetId}" uuid="${widgetId}" ref="container"  class="${prefix('container')}">
+      <div  widget-type="newWidget" id="aad-widget-new-widget-container-${widgetId}" uuid="${widgetId}" ref="container"  class="${prefix('container')}">
         <div ref="inner"></div>
       </div>`
   );
@@ -157,7 +157,7 @@ function getNewWidgetWidget(uuid, config) {
       `
       <div class="${pre('container')}">
         ${addingWidgets
-          .map((widget) => {
+          .map((widget, index) => {
             return `
           <div class="${pre('item')}">
             <img src="${widget.image}" alt="${widget.name}" />
@@ -166,7 +166,7 @@ function getNewWidgetWidget(uuid, config) {
             <div class="${pre('create-container')}">
               <button ref="create" validName="${
                 widget.validName
-              }" type="submit" class="btn btn-primary" form="repo_metadata_form">Create Widget</button>
+              }" type="submit" createWidgetNth="${index}" class="btn btn-primary" form="repo_metadata_form">Create Widget</button>
             </div>
           </div>`;
           })
@@ -175,11 +175,17 @@ function getNewWidgetWidget(uuid, config) {
       `
     );
 
+    const {closeDrawer} = createDrawer(_html, {});
+
     function listenCreate(elem) {
       elem.addEventListener('click', () => {
         const validName = elem.getAttribute('validName');
         createNewWidget(containerIndex, validName);
-        window.location.reload();
+        // window.location.reload();
+        closeDrawer();
+        setTimeout(() => {
+          reloadWidgets();
+        }, 400);
       });
     }
 
@@ -189,7 +195,7 @@ function getNewWidgetWidget(uuid, config) {
       listenCreate(drawerRefs.create);
     }
 
-    createDrawer(_html, {});
+    
   });
 
   inner.aadAppendChild(profile);

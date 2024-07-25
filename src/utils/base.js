@@ -3,8 +3,8 @@ const GitHubRecentActivity = [];
 const zIndex = {
   modal: 1000,
   drawer: 1010,
-  notification: 1020
-}
+  notification: 1020,
+};
 
 /**
  * Constant values start
@@ -23,7 +23,7 @@ const aad_debounce = (callback, wait) => {
       callback(...args);
     }, wait);
   };
-}
+};
 
 const callApplyWidgetResponsibility = aad_debounce(() => {
   applyWidgetResponsibility();
@@ -243,8 +243,6 @@ var sha256 = function sha256(ascii) {
   return result;
 };
 
-
-
 function addWidget(id, widget) {
   const container = document.getElementById('container-' + id);
   container?.aadAppendChild(widget);
@@ -293,10 +291,11 @@ function containerDrop(e) {
   });
   var data = e.dataTransfer.getData('dragged_id');
   let newWidget = e.currentTarget.querySelector(
-    '.aad-custom-widget-new-widget-container'
+    '[widget-type="newWidget"]'
   );
-  e.currentTarget.appendChild(document.getElementById(data));
-  e.currentTarget.appendChild(newWidget);
+
+  e.currentTarget.aadAppendChild(document.getElementById(data));
+  e.currentTarget.aadAppendChild(newWidget);
 }
 
 function prepareRecentActivity(_feed) {
@@ -334,15 +333,61 @@ function prepareRecentActivity(_feed) {
   });
 }
 function prepareUsername(_feed) {
-  const _ = document.querySelectorAll(
-    '#switch_dashboard_context_left_column-button > span > span > span'
-  )[1];
-  if (_) {
-    GitHubUsername = _.innerText.trim();
-    preloadImage(`https://github.com/${GitHubUsername}.png`);
-  } else {
-    throw new Error('Cannot find username.');
+  function way1() {
+    const _ = document.querySelectorAll(
+      '#switch_dashboard_context_left_column-button > span > span > span'
+    )[1];
+    if (!!_) {
+      GitHubUsername = _.innerText.trim();
+      return true;
+    } else {
+      return false;
+    }
   }
+
+  function way2() {
+    const _ = document.querySelectorAll('meta[name="octolytics-actor-login"]')[0]
+    if (!!_) {
+      GitHubUsername = _.getAttribute('content').trim();
+      return true;
+    } else {  
+      return false;
+    }
+  }
+
+  function way3() {
+    const _ = document.querySelectorAll('meta[name="user-login"]')[0]
+    if (!!_) {
+      GitHubUsername = _.getAttribute('content').trim();
+      return true;
+    } else {  
+      return false;
+    }
+  }
+
+  function way4() {
+    const _ = document.querySelectorAll('button[aria-label="Open user navigation menu"]')[0]
+    if (!!_) {
+      GitHubUsername = _.getAttribute('data-login').trim();
+      return true;
+    } else {  
+      return false;
+    }
+  }
+
+  const ways = [way1, way2, way3, way4];
+  let found = false;
+  for (const way of ways) {
+    if (way()) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    throw new Error('Cannot find GitHub username.');
+  }
+
+  preloadImage(`https://github.com/${GitHubUsername}.png`);
 }
 
 function prepareUtils() {

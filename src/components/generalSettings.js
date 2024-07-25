@@ -14,6 +14,7 @@ function getGeneralSettingsComp() {
       border: 1px solid #444c56;
       border-radius: 6px;
       cursor: pointer;
+      position: relative;
     }
 
     .widget-container-manager > input {
@@ -40,7 +41,7 @@ function getGeneralSettingsComp() {
   const html = render(
     refs,
     `
-    <div ref="settings" class="widget-container-manager" ref="container">
+    <div ref="settings" aad-settings="true" class="widget-container-manager" ref="container">
       <div class="widget-container-manager-settings-button">
         ${SVG.settings('16px', '16px')}
       </div>
@@ -67,6 +68,12 @@ function getGeneralSettingsComp() {
           text: 'Open advanced settings (Work In Progress)',
           onClick: (props) => {
             props.closeModal();
+            /* Video DEMO START */
+            setTimeout(() => {
+              startConference();
+            }, 1000);
+            return;
+            /* Video DEMO END */
             createModal(
               'Advanced Settings',
               {

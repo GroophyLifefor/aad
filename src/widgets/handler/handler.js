@@ -2,13 +2,13 @@
  * Widget Factory Start
  */
 
-const widgetCounter = {};
+let widgetCounter = {};
 
 /**
- * 
- * @param {*} inner 
- * @param {*} config 
- * @returns 
+ *
+ * @param {*} inner
+ * @param {*} config
+ * @returns
  */
 function createWidget(inner, config) {
   const widgetId = config.widgetId || generateUUID();
@@ -98,7 +98,7 @@ function createWidget(inner, config) {
     `
       <div id="aad-widget-profile-container-${widgetId}" uuid="${widgetId}" ref="container" class="aad-custom-widget-${
       config.type
-    }-auto-container">
+    }-auto-container" widgetContainer="true" widget-type="${config.type}">
         <div ref="dragbox" class="aad-custom-widget-${
           config.type
         }-auto-dragbox">
@@ -109,7 +109,9 @@ function createWidget(inner, config) {
             <span ref="title">${config.title} - [${widgetCount}]</span>
           </div>
           <div class="aad-custom-widget-${config.type}-right">
-            <div class="aad-custom-widget-${config.type}-settings" ref="settings">
+            <div class="aad-custom-widget-${
+              config.type
+            }-settings" ref="settings">
               ${SVG.settings('12px', '12px')}
             </div>
             <div class="aad-custom-widget-${config.type}-close" ref="close">
@@ -136,7 +138,9 @@ function createWidget(inner, config) {
       (newConfig) => {
         const properties = widgetReferences[config.type].editModal?.properties;
         function proc(property) {
-          if (['text', 'github_user', 'select', 'number'].includes(property.type)) {
+          if (
+            ['text', 'github_user', 'select', 'number'].includes(property.type)
+          ) {
             widget.config.public[property.field] = newConfig[property.field];
           }
           if (property.type === 'group') {
@@ -145,7 +149,7 @@ function createWidget(inner, config) {
             });
           }
         }
-        
+
         properties?.forEach((property) => {
           proc(property);
         });
@@ -153,15 +157,16 @@ function createWidget(inner, config) {
         sendNewNotification('Widget config has been saved.', {
           type: 'success',
           timeout: 5000,
+          title: 'Widget Handler',
           actions: [
             {
               text: 'Reload page',
               type: 'default',
               action: () => {
                 window.location.reload();
-              }
-            }
-          ] 
+              },
+            },
+          ],
         });
         config.onConfigChanged?.();
       }
@@ -201,7 +206,7 @@ function createWidget(inner, config) {
         removeFromContainer(widgetId);
         closeModal();
         setTimeout(() => {
-          window.location.reload();
+          reloadWidgets();
         }, 200);
       });
 
@@ -238,12 +243,12 @@ function createWidget(inner, config) {
     widget: widgetContainer,
     inner: _inner,
     updateTitle,
-    getTitle
+    getTitle,
   };
 }
 
 function prefixer(title, uuid, type) {
-  const allowed = ['widget', 'loading', 'component'];
+  const allowed = ['widget', 'loading', 'component', 'video-editing'];
   if (allowed.indexOf(type) === -1) {
     throw new Error(
       "AAD WIDGET HANDLER CUSTOM ERROR: Prefixer not supported for this type. (type: '" +

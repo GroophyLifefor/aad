@@ -66,10 +66,14 @@ function getProfileWidget(uuid) {
             <div class="${prefix}-inner-namevbio">
               <h3>
                 <span class="no-underline no-wrap aad-custom-smoothie-color-transition">
-                  ${data.name}
+                  ${data.name || data.login}
                 </span>
               </h3>
-              <p>${data.bio}</p>
+              <p>${data.bio || `
+                <span style="opacity: 0.7; font-style: italic;">
+                  No bio provided.
+                </span>
+                `}</p>
             </div>
             <div class="${prefix}-inner-population">
               <a ref="followers" class="Link--secondary aad-custom-smoothie-color-transition no-underline no-wrap">

@@ -55,6 +55,11 @@ function createModal(title, config, modalFactory) {
     },
     maxWidth: '80dvw',
     maxHeight: '80dvh',
+    cacheInfo: {
+      isCached: false,
+      showIsCached: false,
+      onRenewCache: () => {},
+    },
   };
 
   config = Object.assign({}, defaultConfig, config);
@@ -134,19 +139,30 @@ function createModal(title, config, modalFactory) {
             opacity: 0;
         }
     }
+
+    .${prefix('cache-content')}:hover {
+      text-decoration: underline;
+      cursor: pointer;
+      color: #478be6;
+      transition: color 0.3s ease-in-out;
+    }
     `);
 
   const refs = {};
   const modalContainer = render(
     refs,
     `
-    <div ref="container" class="${prefix('container')}">
+    <div ref="container" aad-modal="true" class="${prefix('container')}">
         <div class="${prefix('divider')}">
             ${
               config.header
                 ? `
               <div class="${prefix('title-container')}">
-                <h4>${title}</h4>
+                <h4>${title} ${
+                    config.cacheInfo.showIsCached && config.cacheInfo.isCached
+                      ? `[<span ref="cachecontent" class="${prefix('cache-content')}">Previously cached</span>]`
+                      : ''
+                  }</h4>
                 ${
                   config?.close
                     ? `
@@ -164,10 +180,20 @@ function createModal(title, config, modalFactory) {
     `
   );
 
+  refs.cachecontent?.addEventListener('mouseover', () => {
+    refs.cachecontent.textContent = 'Renew modal cache';
+  });
+
+  refs.cachecontent?.addEventListener('mouseout', () => {
+    refs.cachecontent.textContent = 'Previously cached';
+  });
+
+  refs.cachecontent?.addEventListener('click', () => {
+    config.cacheInfo.onRenewCache();
+  });
+
   const closeModal = () => {
-    refs.container.classList.add(
-      prefix('container-close')
-    );
+    refs.container.classList.add(prefix('container-close'));
     setTimeout(() => {
       config?.cssUUIDs?.forEach((uuid) => {
         removeCustomCSS(uuid);

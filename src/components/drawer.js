@@ -85,7 +85,7 @@ function createDrawer(inner, config) {
 
   const page = document.querySelector(`body > .page-responsive`);
 
-  wrapperRefs.wrapper.addEventListener('click', () => {
+  function closeDrawer() {
     wrapperRefs.wrapper.remove();
     refs.container.classList.add(prefix('close'));
     page.classList.remove(prefix('page-scale'));
@@ -93,11 +93,17 @@ function createDrawer(inner, config) {
       refs.container.remove();
       page.classList.remove(prefix('page-transition'));
     }, 300);
-  });
+  }
+
+  wrapperRefs.wrapper.addEventListener('click', closeDrawer);
 
   refs.container.aadAppendChild(inner);
   document.body.aadAppendChild(wrapper);
   document.body.aadAppendChild(container);
   page.classList.add(prefix('page-transition'));
   page.classList.add(prefix('page-scale'));
+
+  return {
+    closeDrawer,
+  };
 }

@@ -4,7 +4,9 @@ function loadNewWidget(name, fn, editModal) {
   if (!widgetReferences[name]) {
     widgetReferences[name] = {
       fn,
-      editModal,
+      editModal: editModal || {
+        properties: []
+      },
     };
   } else {
     console.error('AAD ERROR: Widget already exists');

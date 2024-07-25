@@ -93,6 +93,7 @@ function getNotificationManager() {
       type: 'default',
       timeout: null,
       actions: [],
+      title: 'Notification',
     };
 
     const config = { ...defaultConfig, ...e.detail.config };
@@ -201,7 +202,7 @@ function getNotificationManager() {
             ${SVG.close('16px', '16px')}
           </div>
           <div class="${pre('inner')}">
-            <span class="${pre('title')}">Title</span>
+            <span class="${pre('title')}">${config.title}</span>
             <span class="${pre('innerText')}">${e.detail.inner}</span>
             <div ref="actions" class="${pre('actions')}"></div>
           </div>

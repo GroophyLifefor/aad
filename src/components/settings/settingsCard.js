@@ -298,7 +298,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
     const html = render(
       refs,
       `
-      <div class="form-group mt-0 mb-3 ">
+      <div aad-input="true" field="${property.field}" class="form-group mt-0 mb-3 ">
         <div class="mb-2">
           <label for="repo_description">${property.label}</label>
         </div>
@@ -320,7 +320,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
         </div>
         <div ref="subFields" style="margin-left: 16px;margin-top: 4px;display:flex;flex-direction:column;">
         </div>
-        </div>
+      </div>
       `
     );
 
@@ -446,7 +446,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
     const html = render(
       refs,
       `
-      <div class="form-group mt-0 mb-3 ">
+      <div field="${property.field}" class="form-group mt-0 mb-3 ">
         <div class="mb-2">
           <label >${property.label}</label>
         </div>
@@ -457,7 +457,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
               isSelected = true;
             }
             return `<option value="${option.value}" ${isSelected ? 'selected' : ''}>${option.label}</option>`
-          })}
+          }).join('')}
         </select>
         <div ref="subFields" style="margin-left: 16px;margin-top: 4px;display:flex;flex-direction:column;">
         </div>
