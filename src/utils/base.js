@@ -15,8 +15,33 @@ const NO_THANK_YOU = false;
 /**
  * Constant values end
  */
+
+/**
+ * Creates a debounced function that delays the execution of the `callback` until 
+ * after `wait` milliseconds have elapsed since the last time the debounced function was invoked.
+ *
+ * @function aad_debounce
+ * @param {Function} callback - The function to debounce.
+ * @param {number} wait - The number of milliseconds to delay.
+ * @returns {Function} - A new debounced function.
+ *
+ * @example
+ * // Log the window size after resizing stops for 500 milliseconds
+ * const logResize = aad_debounce(() => {
+ *   console.log(`Window size: ${window.innerWidth} x ${window.innerHeight}`);
+ * }, 500);
+ *
+ * // Add event listener for window resize
+ * window.addEventListener('resize', logResize);
+ */
 const aad_debounce = (callback, wait) => {
   let timeoutId = null;
+
+  /**
+   * The debounced function.
+   *
+   * @param {...*} args - The arguments to pass to the callback function.
+   */
   return (...args) => {
     window.clearTimeout(timeoutId);
     timeoutId = window.setTimeout(() => {
@@ -24,6 +49,7 @@ const aad_debounce = (callback, wait) => {
     }, wait);
   };
 };
+
 
 const callApplyWidgetResponsibility = aad_debounce(() => {
   applyWidgetResponsibility();
@@ -243,59 +269,22 @@ var sha256 = function sha256(ascii) {
   return result;
 };
 
-function addWidget(id, widget) {
-  const container = document.getElementById('container-' + id);
-  container?.aadAppendChild(widget);
-}
-
-function boxStartDrag(e) {
-  e.dataTransfer.setData('dragged_id', e.currentTarget.id);
-}
-
-function boxEndDrag(e) {
-  saveWidgetPosition();
-  e.currentTarget.setAttribute('draggable', 'false');
-}
-
 document.addEventListener('onWidgetsStyled', saveWidgetPosition);
 
-function containerAllowDrop(e) {
-  e.preventDefault();
-  this.setAttribute('drop-hover', 'true');
+function addWidget(index, widget, _config) {
+  const defaultConfig = {
+    wrapperLayer: false,
+  };
 
-  const elems = Array.prototype.slice.call(
-    document.getElementsByClassName('aad-widget-container-wrapper')
-  );
-  elems.forEach((elem) => {
-    if (!elem.classList.contains('drop-shadow')) {
-      elem.classList.add('drop-shadow');
-    }
-  });
-}
+  const config = { ...defaultConfig, ..._config };
 
-function containerDragLeave(e) {
-  e.preventDefault();
-  this.removeAttribute('drop-hover');
-}
-
-function containerDrop(e) {
-  e.preventDefault();
-  this.removeAttribute('drop-hover');
-  const elems = Array.prototype.slice.call(
-    document.getElementsByClassName('aad-widget-container-wrapper')
-  );
-  elems.forEach((elem) => {
-    if (elem.classList.contains('drop-shadow')) {
-      elem.classList.remove('drop-shadow');
-    }
-  });
-  var data = e.dataTransfer.getData('dragged_id');
-  let newWidget = e.currentTarget.querySelector(
-    '[widget-type="newWidget"]'
-  );
-
-  e.currentTarget.aadAppendChild(document.getElementById(data));
-  e.currentTarget.aadAppendChild(newWidget);
+  if (config.wrapperLayer) {
+    const wrapper = document.querySelector(`[data-widget-index="${index}"]`);
+    wrapper?.aadAppendChild(widget);
+  } else {
+    const container = document.getElementById('container-' + index);
+    container?.aadAppendChild(widget);
+  }
 }
 
 function prepareRecentActivity(_feed) {
@@ -346,31 +335,35 @@ function prepareUsername(_feed) {
   }
 
   function way2() {
-    const _ = document.querySelectorAll('meta[name="octolytics-actor-login"]')[0]
+    const _ = document.querySelectorAll(
+      'meta[name="octolytics-actor-login"]'
+    )[0];
     if (!!_) {
       GitHubUsername = _.getAttribute('content').trim();
       return true;
-    } else {  
+    } else {
       return false;
     }
   }
 
   function way3() {
-    const _ = document.querySelectorAll('meta[name="user-login"]')[0]
+    const _ = document.querySelectorAll('meta[name="user-login"]')[0];
     if (!!_) {
       GitHubUsername = _.getAttribute('content').trim();
       return true;
-    } else {  
+    } else {
       return false;
     }
   }
 
   function way4() {
-    const _ = document.querySelectorAll('button[aria-label="Open user navigation menu"]')[0]
+    const _ = document.querySelectorAll(
+      'button[aria-label="Open user navigation menu"]'
+    )[0];
     if (!!_) {
       GitHubUsername = _.getAttribute('data-login').trim();
       return true;
-    } else {  
+    } else {
       return false;
     }
   }

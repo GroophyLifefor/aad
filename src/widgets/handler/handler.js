@@ -22,6 +22,7 @@ function createWidget(inner, config) {
       display: flex;
       flex-direction: column;
       gap: 8px;
+      transition: opacity 200ms ease;
     }
   
     .aad-custom-widget-${config.type}-auto-dragbox {
@@ -90,6 +91,11 @@ function createWidget(inner, config) {
     .aad-custom-widget-${config.type}-close:hover {
       transform: scale(1.2);
     }
+
+    .aad-dragging {
+      opacity: 0.5;
+      transition: opacity 1s ease;
+    }
     `);
 
   const widgetRefs = {};
@@ -98,7 +104,7 @@ function createWidget(inner, config) {
     `
       <div id="aad-widget-profile-container-${widgetId}" uuid="${widgetId}" ref="container" class="aad-custom-widget-${
       config.type
-    }-auto-container" widgetContainer="true" widget-type="${config.type}">
+    }-auto-container" widgetContainer="true" draggable="true" widget-type="${config.type}">
         <div ref="dragbox" class="aad-custom-widget-${
           config.type
         }-auto-dragbox">
@@ -126,6 +132,7 @@ function createWidget(inner, config) {
   const dragbox = widgetRefs.dragbox;
   const container = widgetRefs.container;
   const _inner = widgetRefs.inner;
+
 
   widgetRefs.settings.addEventListener('click', () => {
     const widget = getWidgetByUUID(widgetId);
@@ -217,16 +224,6 @@ function createWidget(inner, config) {
   if (!inner && inner !== null) {
     _inner.aadAppendChild(inner);
   }
-
-  dragbox.addEventListener('mousedown', (e) => {
-    e.target.parentNode.setAttribute('draggable', 'true');
-  });
-  dragbox.addEventListener('mouseup', (e) => {
-    e.target.parentNode.setAttribute('draggable', 'false');
-  });
-
-  container.addEventListener('dragstart', boxStartDrag);
-  container.addEventListener('dragend', boxEndDrag);
 
   function updateTitle(newTitle) {
     widgetRefs.title.innerHTML = `${newTitle} - [${widgetCount}]`;

@@ -9,3 +9,11 @@
 ## 1.1.2
 
 - fix: fixed the new widget add button running to the top.
+
+## 1.1.3
+
+- feat: renew cache in frameModal
+
+## 1.1.4
+
+- feat: more modern drag and drop in UI

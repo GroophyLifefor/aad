@@ -37,24 +37,6 @@ function loadWidgets() {
     for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {
       const container = items.containers[i];
       if (!container) {
-        const widgetUUID = generateUUID();
-        const widgetFunc = widgetReferences['newWidget'].fn;
-        const { widget: widgetInstance } = widgetFunc(widgetUUID);
-        addWidget(i, widgetInstance);
-
-        // save
-        const containers = items.containers;
-        containers.push({
-          index: i,
-          widgets: [
-            {
-              type: 'newWidget',
-              uuid: widgetUUID,
-              config: {},
-            },
-          ],
-        });
-        setContainers({ containers: containers });
         continue;
       }
 
@@ -109,7 +91,8 @@ function loadWidgets() {
             }
           }
           const _widgetResponsibility = widgetResponsibility;
-          _widgetResponsibility.currentCount = widgetResponsibility.currentCount();
+          _widgetResponsibility.currentCount =
+            widgetResponsibility.currentCount();
 
           console.error('AAD - There was an error in loadWidgets', {
             widgetInfo,
@@ -142,9 +125,72 @@ function loadWidgets() {
       const { widget: widgetInstance } = widgetFunc(widgetUUID, {
         containerIndex: i,
       });
-      addWidget(i, widgetInstance);
+      addWidget(i, widgetInstance, {
+        wrapperLayer: true,
+      });
     }
+
+    applyDragAndDrop();
   });
+}
+
+function applyDragAndDrop() {
+  const draggbles = document.querySelectorAll('[widgetContainer="true"]');
+  const containers = document.querySelectorAll('[aad-container="true"]');
+
+  draggbles.forEach((draggble) => {
+    //for start dragging costing opacity
+    draggble.addEventListener('dragstart', () => {
+      draggble.classList.add('aad-dragging');
+    });
+
+    //for end the dragging opacity costing
+    draggble.addEventListener('dragend', () => {
+      draggble.classList.remove('aad-dragging');
+    });
+  });
+  //shit
+  containers.forEach((container) => {
+    const debouncedDragOver = aad_debounce((args) => {
+      const afterElement = dragAfterElement(container, args.clientY);
+      const dragging = document.querySelector('.aad-dragging');
+      
+      if (!dragging)
+        return;
+
+      if (afterElement == null) {
+        container.appendChild(dragging);
+      } else {
+        container.insertBefore(dragging, afterElement);
+      }
+    }, 10);
+
+    container.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      debouncedDragOver({
+        clientY: e.clientY,
+      });
+    });
+  });
+
+  function dragAfterElement(container, y) {
+    const draggbleElements = [
+      ...container.querySelectorAll('[widgetContainer="true"]:not(.dragging)'),
+    ];
+
+    return draggbleElements.reduce(
+      (closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      },
+      { offset: Number.NEGATIVE_INFINITY }
+    ).element;
+  }
 }
 
 async function main() {

@@ -98,6 +98,14 @@ function initContainers() {
                   private: {},
                 },
               },
+              {
+                type: 'todo',
+                uuid: generateUUID(),
+                config: {
+                  public: {},
+                  private: {},
+                },
+              },
             ],
           },
           {
@@ -111,21 +119,13 @@ function initContainers() {
                   private: {},
                 },
               },
-              {
-                type: 'entries',
-                uuid: generateUUID(),
-                config: {
-                  public: {},
-                  private: {},
-                },
-              },
             ],
           },
           {
             index: 2,
             widgets: [
               {
-                type: 'trending',
+                type: 'entries',
                 uuid: generateUUID(),
                 config: {
                   public: {},
@@ -138,7 +138,7 @@ function initContainers() {
             index: 3,
             widgets: [
               {
-                type: 'todo',
+                type: 'trending',
                 uuid: generateUUID(),
                 config: {
                   public: {},

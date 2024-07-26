@@ -39,15 +39,21 @@ function applyWidgetResponsibility() {
   
   @media (max-width: ${widgetResponsibility.breaks.sm.max_px}) {
     .add-custom-feed {
-      grid-template-columns: repeat(${widgetResponsibility.breaks.sm.count}, minmax(0, 1fr));
+      grid-template-columns: repeat(${
+        widgetResponsibility.breaks.sm.count
+      }, minmax(0, 1fr));
     }
 
     ${widgetResponsibility.breaks.sm.count == 3 ? dynamicWidth : ''}
   }
   
-  @media (min-width: ${widgetResponsibility.breaks.sm.max_px}) and (max-width: ${widgetResponsibility.breaks.md.max_px}) {
+  @media (min-width: ${
+    widgetResponsibility.breaks.sm.max_px
+  }) and (max-width: ${widgetResponsibility.breaks.md.max_px}) {
     .add-custom-feed {
-      grid-template-columns: repeat(${widgetResponsibility.breaks.md.count}, minmax(0, 1fr));
+      grid-template-columns: repeat(${
+        widgetResponsibility.breaks.md.count
+      }, minmax(0, 1fr));
     }
 
     ${widgetResponsibility.breaks.md.count == 3 ? dynamicWidth : ''}
@@ -85,7 +91,7 @@ function applyWidgetResponsibility() {
   const uuid = addCustomCSS(css);
   widgetResponsibility.uuid = uuid;
 
-  const event = new CustomEvent('onWidgetsStyled', {  });
+  const event = new CustomEvent('onWidgetsStyled', {});
   document.dispatchEvent(event);
 }
 
@@ -101,12 +107,12 @@ function getWidgetContainer() {
       `
   );
 
-  for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {
+  for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {  
     const feedCardRefs = {};
-    const { refs:cardRefs, node: feedCard } = GitHubCard(
+    const { refs: cardRefs, node: feedCard } = GitHubCard(
       render(
         feedCardRefs,
-        `<div id="container-${i}" ref="container" class="aad-widget-container-wrapper"></div>`
+        `<div id="container-${i}" aad-container="true" ref="container" class="aad-widget-container-wrapper"></div>`
       ),
       { isFirst: true, customPadding: '12px' }
     );
@@ -114,10 +120,6 @@ function getWidgetContainer() {
     cardRefs.wrapper.setAttribute('data-widget-index', i);
 
     const container = feedCardRefs.container;
-
-    container.addEventListener('dragover', containerAllowDrop);
-    container.addEventListener('drop', containerDrop);
-    container.addEventListener('dragleave', containerDragLeave);
 
     refs.main.aadAppendChild(feedCard);
   }

@@ -199,8 +199,6 @@ function getNewWidgetWidget(uuid, config) {
   });
 
   inner.aadAppendChild(profile);
-  container.addEventListener('dragstart', boxStartDrag);
-  container.addEventListener('dragend', boxEndDrag);
 
   return { widget: test };
 }

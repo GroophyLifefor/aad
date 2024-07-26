@@ -4,12 +4,19 @@ function GitHubCard(child, config) {
 
   addCustomCSS(`
     .${prefix('wrapper-first')} {
-      padding-top: 0px !important;
-      padding-bottom: 0px !important;
       width: 100%;
+
+      border-radius: 6px;
+      padding: 12px;
+      background-color: #22272e;
+      border: 1px solid #444c56; 
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
     }
 
     .${prefix('fit')} {
+      height: fit-content;
     }
 
     .${prefix('sameHeight')} {
@@ -23,10 +30,13 @@ function GitHubCard(child, config) {
 
     .${prefix('container')} {
       width: 100%;
+      
+      /*
       border-radius: 6px;
       padding: ${config['customPadding'] || '16px'};
       background-color: #22272e;
       border: 1px solid #444c56;
+      */
     }
   
     .${prefix('i-fit')} {}
@@ -53,11 +63,17 @@ function GitHubCard(child, config) {
   function applyHeightType() {
     /* Container settings */
     const heightType = containerSettings.heightType;
-    refs.container.classList.remove(prefix('fit'));
+    refs.wrapper.classList.remove(prefix('fit'));
     refs.container.classList.remove(prefix('sameHeight'));
-    refs.container.classList.remove(prefix('sameHeightWithMinDVH'));
+    refs.wrapper.classList.remove(prefix('sameHeightWithMinDVH'));
 
-    refs.container.classList.add(prefix(heightType));
+    if (heightType === 'fit') {
+      refs.wrapper.classList.add(prefix('fit'));
+    } else if (heightType === 'sameHeight') {
+      refs.container.classList.add(prefix('sameHeight'));
+    } else if (heightType === 'sameHeightWithMinDVH') {
+      refs.wrapper.classList.add(prefix('sameHeightWithMinDVH'));
+    }
 
     /* Inner settings */
     refs.inner.classList.remove(prefix('i-fit'));
@@ -70,7 +86,6 @@ function GitHubCard(child, config) {
   applyHeightType();
 
   document.addEventListener('onContainerSettingsUpdated', applyHeightType);
-
 
   refs.inner.aadAppendChild(child);
   return { refs, node: parent };
