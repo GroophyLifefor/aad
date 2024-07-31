@@ -1,8 +1,10 @@
 function getTrendingWidget(uuid) {
+  let onConfigChanged = (config) => {};
   let { widget, inner } = createWidget(CONST_IWillAddLater, {
     title: 'Trending',
     type: 'trending',
     widgetId: uuid,
+    onConfigChanged: onConfigChanged
   });
   const prefix = prefixer('trending', uuid, 'widget');
   let refs = {};
@@ -14,6 +16,13 @@ function getTrendingWidget(uuid) {
 
   // init cache
   setConfigByUUID(uuid, { public: { url, containerQuery, itemQuery } });
+
+  onConfigChanged = (config) => {
+    url = config.public.url;
+    containerQuery = config.public.containerQuery;
+    itemQuery = config.public.itemQuery;
+    execute();
+  };
 
   function saveUrl() {
     setConfigByUUID(uuid, { public: { url } });
@@ -166,17 +175,46 @@ function getTrendingWidget(uuid) {
     };
 
     const changeUrl = () => {
-      const loadRepositoryPreview = (url) => {
-        const { close } = aad_loading(uuid);
-        createFrameModal({
-          title: 'Repository Preview',
-          url: url,
-          selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
-          prefix: prefix('modal-repository-preview'),
-          onLoaded: () => {
-            close();
-          },
-        });
+      const loadRepositoryPreview = (url, config) => {
+        let closeLoading = null;
+        closeLoading = aad_loading(uuid).close;
+
+        function load(_url) {
+          createFrameModal({
+            title: 'Repository Preview',
+            url: _url,
+            selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
+            prefix: prefix('modal-repository-preview'),
+            onLoaded: (dom, close) => {
+              closeLoading();
+
+              if (config.freeRedirect === true) {
+                const links = dom?.querySelectorAll('a') || [];
+                links.forEach((link) => {
+                  link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = link.getAttribute('href');
+                    close();
+
+                    console.log('href', href);
+                    if (href.includes('http')) {
+                      sendNewNotification('Unvalid action', {
+                        type: 'error',
+                        timeout: 3000,
+                      });
+                      return
+                    }
+
+                    closeLoading = aad_loading(uuid).close;
+                    load(href);
+                  });
+                });
+              }
+            },
+          });
+        } 
+
+        load(url)
       };
 
       const loadUserPreview = (url) => {
@@ -225,13 +263,17 @@ function getTrendingWidget(uuid) {
               'https://api.github.com/repos/' + splitted[1] + '/' + splitted[2]
             ).then((res) => {
               if (res.status === 200) {
-                loadRepositoryPreview('https://github.com' + href);
+                loadRepositoryPreview('https://github.com' + href, {
+                  freeRedirect: true,
+                });
               } else {
                 // check is user
                 APIRequest('https://api.github.com/users/' + splitted[1]).then(
                   (res) => {
                     if (res.status === 200) {
-                      loadUserPreview('https://github.com' + href);
+                      loadUserPreview('https://github.com' + href, {
+                        freeRedirect: true,
+                      });
                     } else {
                       url = 'https://github.com' + href;
                       saveUrl();

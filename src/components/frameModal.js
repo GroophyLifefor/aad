@@ -8,7 +8,7 @@
  * * headers?: object
  * } props
  */
-function createFrameModal(props) {
+async function createFrameModal(props) {
   async function create(data, config) {
     const parser = new DOMParser();
     const htmlDocument = parser.parseFromString(data, 'text/html');
@@ -39,11 +39,11 @@ function createFrameModal(props) {
 
     if (!conversation) {
       console.error('Conversation not found', props.url);
-      return;
+      return { node: null, close: () => {}, error: true };
     }
 
     let _closeModal = () => {};
-    createModal(
+    const { inner } = createModal(
       `${props.title}`,
       {
         cssUUIDs: cssUUIDs,
@@ -126,32 +126,38 @@ function createFrameModal(props) {
         return modal;
       }
     );
+
+    return {
+      node: inner,
+      close: _closeModal,
+      error: false
+    };
   }
 
   if (Cache.has(props.url)) {
     props.onLoad?.();
-    create(Cache.get(props.url), {
+    const { node, close } = await create(Cache.get(props.url), {
       isCached: true,
     });
-    props.onLoaded?.();
+    props.onLoaded?.(node, close);
   } else {
     let headers = props.headers || {};
-    fetch(props.url, headers)
+    await fetch(props.url, headers)
       .then((res) => res.text())
-      .then((data) => {
+      .then(async (data) => {
         Cache.set(props.url, data);
         if (!!props.onLoad) {
-          props.onLoad.then(() => {
-            create(data, {
+          props.onLoad.then(async () => {
+            const { node, close } = await create(data, {
               isCached: false,
             });
-            props.onLoaded?.();
+            props.onLoaded?.(node, close);
           });
         } else {
-          create(data, {
+          const { node, close } = await create(data, {
             isCached: false,
           });
-          props.onLoaded?.();
+          props.onLoaded?.(node, close);
         }
       });
   }

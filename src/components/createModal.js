@@ -217,4 +217,9 @@ function createModal(title, config, modalFactory) {
   });
 
   body.prepend(modalContainer);
+
+  return {
+    node: modalContainer,
+    inner: refs.inner,
+  }
 }

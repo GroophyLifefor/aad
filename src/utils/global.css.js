@@ -18,6 +18,10 @@ function initGlobalCSS() {
       background-color: #1c2128;
     }
 
+    html {
+      overflow: hidden;
+    }
+
     .AppHeader {
       border-top-left-radius: 12px;
       border-top-right-radius: 12px;
