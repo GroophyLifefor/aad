@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "AAD - Highly Customizable GitHub",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "GitHub interface supporter for lazy developers",
-  "permissions": ["storage"],
+  "permissions": ["storage", "unlimitedStorage"],
   "browser_specific_settings": {
     "gecko": {
       "id": "{f039bb85-3138-4aaa-93f4-ecee1a392cb5}"
