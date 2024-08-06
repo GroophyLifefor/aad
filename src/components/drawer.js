@@ -25,7 +25,7 @@ function createDrawer(inner, config) {
       height: 9999px;
       max-height: 0px;
       transition: height 0.3s;
-      background-color: #2d333b;
+      background-color: ${getColor('drawer.bg')};
       overflow-y: auto;
     }
 

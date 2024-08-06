@@ -15,7 +15,7 @@ function sendNewNotification(inner, config) {
   const uuid = generateUUID();
   const event = new CustomEvent('onNewNotification', {
     detail: {
-      inner,
+      inner: inner.replaceAll('\n', '<br />'),
       config,
       uuid,
     },
@@ -122,6 +122,7 @@ function getNotificationManager() {
     addCustomCSS(`
       .${pre('notification')} {
         min-width: 360px;
+        max-width: 720px;
         padding: 16px;
         border-radius: 8px;
         box-sizing: border-box;
@@ -130,6 +131,7 @@ function getNotificationManager() {
         background-color: ${color}E6;
         transition: all 0.3s;
         animation: ${pre('fade-in')} 0.3s ease;
+        overflow: hidden;
       }
 
       @media (max-width: 420px) {
@@ -141,7 +143,7 @@ function getNotificationManager() {
 
       .${pre('notification')}:hover {
         background-color: ${color};
-        transform: translateY(-4px) translateX(4px) scale(1.05);
+        transform: translateY(-4px) translateX(4px) scale(1.02);
       }
 
       @keyframes ${pre('fade-in')} {
@@ -189,6 +191,26 @@ function getNotificationManager() {
         gap: 8px;
         justify-content: flex-end;
       }      
+
+      .${pre('timing')} {
+        position: absolute;
+        bottom: 0;
+        height: 4px;
+        margin-right: 16px;
+        width: 100%;
+        background-color: #00000033;
+        left: 0;
+        animation: ${pre('timing')} ${config.timeout-200}ms linear
+      }
+
+      @keyframes ${pre('timing')} {
+        from {
+          width: 100%;
+        }
+        to {
+          width: 0%;
+        }
+      }
       `);
 
     const notiRefs = {};
@@ -206,6 +228,7 @@ function getNotificationManager() {
             <span class="${pre('innerText')}">${e.detail.inner}</span>
             <div ref="actions" class="${pre('actions')}"></div>
           </div>
+          <div class="${pre('timing')}"></div>
         </div>
         `
     );
@@ -233,7 +256,10 @@ function getNotificationManager() {
           `
       );
 
-      actionRefs.action.addEventListener('click', () => action.action());
+      actionRefs.action.addEventListener('click', () => {
+        action.action();
+        removeNotificationByElement(notiRefs.notification, pre)
+      });
 
       notiRefs.actions.aadAppendChild(actionElement);
     });
@@ -248,8 +274,12 @@ function getNotificationManager() {
         if (notiRefs.notification.matches(':hover')) {
           notiRefs.notification.addEventListener('mouseleave', () => {
             removeNotificationByElement(notiRefs.notification, pre);
+            e.detail.config.onTimeout?.();
           });
-        } else removeNotificationByElement(notiRefs.notification, pre);
+        } else {
+          removeNotificationByElement(notiRefs.notification, pre);
+          e.detail.config.onTimeout?.();
+        }
       }, e.detail.config.timeout);
     }
 

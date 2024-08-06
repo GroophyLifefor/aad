@@ -11,29 +11,18 @@ function getGeneralSettingsComp() {
       display: flex;
       justify-content: center;
       align-items: center;
-      border: 1px solid #444c56;
+      border: 1px solid ${getColor('settings.icon.border')};
+      background-color: ${getColor('settings.icon.bg')};
       border-radius: 6px;
       cursor: pointer;
       position: relative;
-    }
-
-    .widget-container-manager > input {
-      width: 24px;
-      height: 24px;
-      background-color: transparent;
-      border: none;
-      align-items: center;
-      text-align: center;
-      color: #778491;
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 11px;
     }
 
     .widget-container-manager-settings-button {
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #778491;
+      color: ${getColor('settings.icon.iconFill')};
     }
   `);
 
@@ -50,6 +39,13 @@ function getGeneralSettingsComp() {
   );
 
   refs.settings.addEventListener('click', () => {
+    aad_fetch('example.com', {
+      method: 'GET',
+    }).then((res) => {
+      console.log(res);
+    });
+    return;
+
     let _widgets = widgetResponsibility.breaks;
     let _containers = containerSettings;
 
@@ -83,15 +79,18 @@ function getGeneralSettingsComp() {
               ({ closeModal }) => {
                 const uuid = generateUUID();
                 const prefix = prefixer('advanced-settings', uuid, 'component');
-          
+
                 const advancedSettingRefs = {};
                 const advancedSettingHTML = render(
                   advancedSettingRefs,
                   `
-                  <div ref="${prefix('container')}" style="width: calc(100dvw - 48px); height: calc(100dvh - 80px);">
+                  <div ref="${prefix(
+                    'container'
+                  )}" style="width: calc(100dvw - 48px); height: calc(100dvh - 80px);">
                     Work in progress
                   </div>
-                  `);
+                  `
+                );
 
                 return advancedSettingHTML;
               }
@@ -172,11 +171,11 @@ function getGeneralSettingsComp() {
                   value: 'fit',
                 },
                 {
-                  label: 'Fit to other container\'s height',
+                  label: "Fit to other container's height",
                   value: 'sameHeight',
                 },
                 {
-                  label: 'Fit to other container\'s height with min DVH',
+                  label: "Fit to other container's height with min DVH",
                   value: 'sameHeightWithMinDVH',
                 },
               ],

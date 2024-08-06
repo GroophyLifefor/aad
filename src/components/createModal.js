@@ -87,7 +87,7 @@ function createModal(title, config, modalFactory) {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        background-color: #282f38;
+        background-color: ${getColor('widget.bg')};
         border-radius: 4px;
         padding: ${config.padding};
         max-width: ${config.maxWidth};
@@ -143,7 +143,7 @@ function createModal(title, config, modalFactory) {
     .${prefix('cache-content')}:hover {
       text-decoration: underline;
       cursor: pointer;
-      color: #478be6;
+      color: ${getColor('globalLinkColor')};
       transition: color 0.3s ease-in-out;
     }
     `);

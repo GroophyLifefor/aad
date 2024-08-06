@@ -142,7 +142,7 @@ async function createFrameModal(props) {
     props.onLoaded?.(node, close);
   } else {
     let headers = props.headers || {};
-    await fetch(props.url, headers)
+    await aad_fetch(props.url, headers)
       .then((res) => res.text())
       .then(async (data) => {
         Cache.set(props.url, data);

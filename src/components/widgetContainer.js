@@ -78,14 +78,6 @@ function applyWidgetResponsibility() {
     flex-direction: column;
     gap: 24px;
   }
-
-  .aad-widget-container-wrapper[drop-hover] {
-    background-color: #5a677a;
-  }
-
-  .drop-shadow {
-    background-color: #3e4754;
-  }
   `;
 
   const uuid = addCustomCSS(css);

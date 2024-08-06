@@ -28,7 +28,7 @@ async function APIRequest(url, options = {}) {
   }
 
   try {
-    const response = await fetch(url, options);
+    const response = await aad_fetch(url, options);
     const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
     const rateLimitLimit = response.headers.get('X-RateLimit-Limit');
 
@@ -63,7 +63,7 @@ function getPatFromStorage() {
 }
 
 async function checkIsValidToken(token) {
-  const fetched = await fetch('https://api.github.com/user', {
+  const fetched = await aad_fetch('https://api.github.com/user', {
     headers: {
       Authorization: `token ${token}`,
     },

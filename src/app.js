@@ -59,56 +59,15 @@ function loadWidgets() {
             widgetIndex: j,
           };
 
-          const error = {
-            message: e.message,
-            stack: e.stack,
-            arguments: e.arguments,
-            type: e.type,
-            e,
-          };
-
-          const user = {
-            userAgent: navigator.userAgent,
-            deviceMemory: navigator.deviceMemory || -1,
-            hardwareConcurrency: navigator.hardwareConcurrency || -1,
-            userAgentData: navigator.userAgentData,
-            GitHubUsername,
-          };
-
-          const system = {
-            screenWidth: screen.width,
-            screenHeight: screen.height,
-            colorDepth: screen.colorDepth,
-            windowWidth: window.innerWidth,
-            windowHeight: window.innerHeight,
-          };
-
-          var manifestData = chrome.runtime.getManifest();
-          const _widgetCounter = widgetCounter;
-          for (let key in _widgetCounter) {
-            if (_widgetCounter.hasOwnProperty(key)) {
-              _widgetCounter[key]--;
+          fireError(
+            'AAD - There was an error in loadWidgets',
+            {
+              error: e,
+              extra: {
+                widgetInfo
+              }
             }
-          }
-          const _widgetResponsibility = widgetResponsibility;
-          _widgetResponsibility.currentCount =
-            widgetResponsibility.currentCount();
-
-          console.error('AAD - There was an error in loadWidgets', {
-            widgetInfo,
-            error,
-            user,
-            system,
-            app: {
-              version: manifestData.version,
-              widgetResponsibility,
-              widgetCounter,
-              tokens,
-              aad_containers,
-              GitHubRecentActivity,
-              notifications,
-            },
-          });
+          )
           continue;
         }
         if (!widgetResult) {

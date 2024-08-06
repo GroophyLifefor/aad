@@ -4,7 +4,7 @@ function getTrendingWidget(uuid) {
     title: 'Trending',
     type: 'trending',
     widgetId: uuid,
-    onConfigChanged: onConfigChanged
+    onConfigChanged: onConfigChanged,
   });
   const prefix = prefixer('trending', uuid, 'widget');
   let refs = {};
@@ -202,7 +202,7 @@ function getTrendingWidget(uuid) {
                         type: 'error',
                         timeout: 3000,
                       });
-                      return
+                      return;
                     }
 
                     closeLoading = aad_loading(uuid).close;
@@ -212,9 +212,9 @@ function getTrendingWidget(uuid) {
               }
             },
           });
-        } 
+        }
 
-        load(url)
+        load(url);
       };
 
       const loadUserPreview = (url) => {
@@ -299,13 +299,21 @@ function getTrendingWidget(uuid) {
       changeUrl();
       return Promise.resolve();
     } else {
-      return fetch(url)
+      return aad_fetch(url)
         .then((res) => res.text())
         .then((data) => {
           Cache.set(url, data);
           renderTrendings(data);
           keepResponsive();
           changeUrl();
+        })
+        .catch((error) => {
+          refs.container.innerHTML = '';
+          inner.innerHTML = `
+          <div class="aad-w-full aad-center">
+            <span>${error}<span>
+          </div>
+          `;
         });
     }
   }
@@ -316,7 +324,7 @@ function getTrendingWidget(uuid) {
   }
 
   execute();
-  return {widget};
+  return { widget };
 }
 
 loadNewWidget('trending', getTrendingWidget, {

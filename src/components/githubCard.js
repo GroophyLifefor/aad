@@ -8,8 +8,8 @@ function GitHubCard(child, config) {
 
       border-radius: 6px;
       padding: 12px;
-      background-color: #22272e;
-      border: 1px solid #444c56; 
+      background-color: ${getColor('container.bg')};
+      border: 1px solid ${getColor('container.border')}; 
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -30,13 +30,6 @@ function GitHubCard(child, config) {
 
     .${prefix('container')} {
       width: 100%;
-      
-      /*
-      border-radius: 6px;
-      padding: ${config['customPadding'] || '16px'};
-      background-color: #22272e;
-      border: 1px solid #444c56;
-      */
     }
   
     .${prefix('i-fit')} {}

@@ -195,7 +195,7 @@ function getTrendingWidget(uuid) {
   }
 
   function checkEntries(renderCount) {
-    fetch(url(1), {
+    aad_fetch(url(1), {
       redirect: 'follow',
     })
       .then((response) => response.text())
@@ -314,6 +314,14 @@ function getTrendingWidget(uuid) {
 
         makeDetailsDynamicResponsive();
         listenEntryClicks();
+      })
+      .catch((error) => {
+        endLoadingScreen();
+        inner.innerHTML = `
+        <div class="aad-w-full aad-center">
+          <span>${error}<span>
+        </div>
+        `;
       });
   }
 
