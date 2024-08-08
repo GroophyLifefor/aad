@@ -59,15 +59,12 @@ function loadWidgets() {
             widgetIndex: j,
           };
 
-          fireError(
-            'AAD - There was an error in loadWidgets',
-            {
-              error: e,
-              extra: {
-                widgetInfo
-              }
-            }
-          )
+          fireError('AAD - There was an error in loadWidgets', {
+            error: e,
+            extra: {
+              widgetInfo,
+            },
+          });
           continue;
         }
         if (!widgetResult) {
@@ -113,9 +110,8 @@ function applyDragAndDrop() {
     const debouncedDragOver = aad_debounce((args) => {
       const afterElement = dragAfterElement(container, args.clientY);
       const dragging = document.querySelector('.aad-dragging');
-      
-      if (!dragging)
-        return;
+
+      if (!dragging) return;
 
       if (afterElement == null) {
         container.appendChild(dragging);
@@ -166,6 +162,10 @@ async function main() {
 
   loadWidgets();
   printContainers();
+
+  fireError('AAD - Test exception', {
+    extra: {},
+  });
 
   // setWidgetLgCount(3);
 }

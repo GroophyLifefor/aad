@@ -6,8 +6,6 @@
  */
 
 const notifications = {
-  showingCount: 0,
-  showingLimit: 3,
   data: [],
 };
 
@@ -20,6 +18,7 @@ function sendNewNotification(inner, config) {
       uuid,
     },
   });
+  notifications.data.push({ inner, config, uuid, date: Date.now() });
   document.dispatchEvent(event);
   return uuid;
 }
@@ -200,7 +199,7 @@ function getNotificationManager() {
         width: 100%;
         background-color: #00000033;
         left: 0;
-        animation: ${pre('timing')} ${config.timeout-200}ms linear
+        animation: ${pre('timing')} ${config.timeout - 200}ms linear
       }
 
       @keyframes ${pre('timing')} {
@@ -235,7 +234,7 @@ function getNotificationManager() {
 
     config.actions.forEach((action) => {
       const actionUUID = generateUUID();
-      const p = (title) => pre('action-' + actionUUID + '-' + title); 
+      const p = (title) => pre('action-' + actionUUID + '-' + title);
 
       addCustomCSS(`
         .${p('action')} {
@@ -252,13 +251,15 @@ function getNotificationManager() {
       const actionElement = render(
         actionRefs,
         `
-          <button ref="action" type="submit" class="btn btn-primary ${p('action')}" form="repo_metadata_form">${action.text}</button>
+          <button ref="action" type="submit" class="btn btn-primary ${p(
+            'action'
+          )}" form="repo_metadata_form">${action.text}</button>
           `
       );
 
       actionRefs.action.addEventListener('click', () => {
         action.action();
-        removeNotificationByElement(notiRefs.notification, pre)
+        removeNotificationByElement(notiRefs.notification, pre);
       });
 
       notiRefs.actions.aadAppendChild(actionElement);

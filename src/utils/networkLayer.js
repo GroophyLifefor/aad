@@ -1,4 +1,4 @@
-const validFetchHosts = ['api.github.com'];
+const validFetchHosts = ['api.github.com', 'github.com', 'http://localhost:3000', 'aad-ext.vercel.app'];
 
 function parseUrl(url) {
   var l = document.createElement('a');

@@ -59,20 +59,21 @@ function fireError(message, data) {
       version: manifestData.version,
       _widgetResponsibility,
       widgetCounter,
-      tokens,
+      ratelimitRemaning: tokens,
       aad_containers,
-      GitHubRecentActivity,
       notifications,
     },
   });
 
+  
+
   setTimeout(() => {
     sendNewNotification(
-      "Something went wrong, I'm so sorry for the inconvenience! If it's not too much trouble, could I possibly send the error log to the server so we can work together to find a solution?"
-      + '\n- Error info'
-      + '\n- Limited container info'
-      + '\n- Limited widget info'
-      + '\n- and some other info which might help us to solve the issue.',
+      "Something went wrong, I'm so sorry for the inconvenience! If it's not too much trouble, could I possibly send the error log to the server so we can work together to find a solution?" +
+        '\n- Error info' +
+        '\n- Limited container info' +
+        '\n- Limited widget info' +
+        '\n- and some other info which might help us to solve the issue.',
       {
         type: 'error',
         timeout: 8000,
@@ -82,14 +83,28 @@ function fireError(message, data) {
             text: 'No, thanks',
             type: 'default',
             action: () => {
-              console.log('AWESOME');
             },
           },
           {
             text: 'Send it',
             type: 'success',
             action: () => {
-              console.log('AWESOME');
+              (async () => {
+                aad_fetch('https://aad-ext.vercel.app/api/reportException', {
+                  method: 'POST',
+                  mode: 'no-cors',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    appVersion: manifestData.version,
+                    errorStack: data.extra.error.stack || '',
+                    errorType: data.extra.error.type || '',
+                    errorArguments: data.extra.error.arguments || '',
+                    errorMessage: data.extra.error.message || '',
+                  }),
+                });
+              })();
             },
           },
         ],

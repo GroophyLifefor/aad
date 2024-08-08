@@ -25,3 +25,10 @@
 ## 1.1.6
 
 - feat: Requested unlimitedStorage permission to store everything(mostly) on your local.
+
+## 1.1.7
+
+- FireError with report
+- Timing to notifications
+- Network Layer Schema
+- aadRender which able to render new aad components

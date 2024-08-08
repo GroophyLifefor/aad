@@ -39,13 +39,6 @@ function getGeneralSettingsComp() {
   );
 
   refs.settings.addEventListener('click', () => {
-    aad_fetch('example.com', {
-      method: 'GET',
-    }).then((res) => {
-      console.log(res);
-    });
-    return;
-
     let _widgets = widgetResponsibility.breaks;
     let _containers = containerSettings;
 

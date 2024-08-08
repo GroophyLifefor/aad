@@ -120,6 +120,10 @@ function getTrendingWidget(uuid) {
 
   function buildTemplate() {
     addCustomCSS(`
+      .Box-row--focus-gray.navigation-focus {
+        background-color: transparent !important;
+      }
+
       .${prefix('container')} {
         overflow-x: auto;
       }
