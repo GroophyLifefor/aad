@@ -57,12 +57,11 @@ function initGlobalCSS() {
 
     /* width */
     .aad-scroll-x::-webkit-scrollbar {
-      width: 5px;
+      height: 8px;
     }
 
     /* Track */
     .aad-scroll-x::-webkit-scrollbar-track {
-      box-shadow: inset 0 0 5px grey; 
       border-radius: 10px;
     }
     
@@ -79,12 +78,11 @@ function initGlobalCSS() {
 
     /* width */
     .aad-scroll-y::-webkit-scrollbar {
-      height: 5px;
+      width: 8px;
     }
 
     /* Track */
     .aad-scroll-y::-webkit-scrollbar-track {
-      box-shadow: inset 0 0 5px grey; 
       border-radius: 10px;
     }
     

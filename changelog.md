@@ -38,3 +38,5 @@
 - Change widget position save fixed.
 - New 'entries not found' text rather than crash
 - Error handling improvements
+- Slightly bigger aad's custom scrollbar
+- Some scrolls moved to aad's custom scrollbar

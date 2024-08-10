@@ -191,7 +191,7 @@ function getTrendingWidget(uuid) {
     const html = render(
       refs,
       `
-        <div ref="container" class="${prefix('container')}">
+        <div ref="container" class="${prefix('container')} aad-scroll-x">
         </div>
         `
     );
@@ -346,36 +346,33 @@ function getTrendingWidget(uuid) {
   }
 
   function makeDetailsDynamicResponsive() {
-    refs.container.querySelectorAll('.issue-meta-section').forEach((entry) => {
-      const actualElement = entry.parentElement;
-      actualElement.classList.remove('d-none');
-      actualElement.classList.remove('d-md-inline-flex');
-    });
-
+    const FREAKING_MAGIC_NUMBER = 660;
     let state = 'none';
-    new ResizeObserver(() => {
+    let resizeTimeout;
+  
+    const handleResize = () => {
       const width = refs.container.offsetWidth;
-      const FREAKING_MAGIC_NUMBER = 660;
-
+  
       if (width < FREAKING_MAGIC_NUMBER && state !== 'hide') {
         state = 'hide';
-        refs.container
-          .querySelectorAll('.issue-meta-section')
-          .forEach((entry) => {
-            const actualElement = entry.parentElement;
-            actualElement.classList.remove(prefix('show'));
-            actualElement.classList.add(prefix('hide'));
-          });
+        refs.container.querySelectorAll('.issue-meta-section').forEach((entry) => {
+          const actualElement = entry.parentElement;
+          actualElement.classList.remove(prefix('show'));
+          actualElement.classList.add(prefix('hide'));
+        });
       } else if (width >= FREAKING_MAGIC_NUMBER && state !== 'show') {
         state = 'show';
-        refs.container
-          .querySelectorAll('.issue-meta-section')
-          .forEach((entry) => {
-            const actualElement = entry.parentElement;
-            actualElement.classList.remove(prefix('hide'));
-            actualElement.classList.add(prefix('show'));
-          });
+        refs.container.querySelectorAll('.issue-meta-section').forEach((entry) => {
+          const actualElement = entry.parentElement;
+          actualElement.classList.remove(prefix('hide'));
+          actualElement.classList.add(prefix('show'));
+        });
       }
+    };
+  
+    new ResizeObserver(() => {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(handleResize, 100);
     }).observe(refs.container);
   }
 

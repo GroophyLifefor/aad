@@ -106,7 +106,7 @@ function getTrendingWidget(uuid) {
     const html = render(
       refs,
       `
-        <div ref="container" class="${prefix('container')}">
+        <div ref="container" class="${prefix('container')} aad-scroll-x">
         </div>
         `
     );

@@ -174,7 +174,7 @@ function createModal(title, config, modalFactory) {
             </div>`
                 : ''
             }
-            <div class="${prefix('inner')}" ref="inner"></div>
+            <div class="${prefix('inner')} aad-scroll-y" ref="inner"></div>
         </div>
     </div>
     `
