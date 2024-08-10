@@ -10,8 +10,11 @@ function getTrendingWidget(uuid) {
   };
 
   const widgetData = getWidgetByUUID(uuid);
-  let headerTitle = widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
-  let headerDescription = widgetData.config.public.headerDescription || 'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.';
+  let headerTitle =
+    widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
+  let headerDescription =
+    widgetData.config.public.headerDescription ||
+    'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.';
   let renderCount = widgetData.config.public.initialRenderCount || 3;
 
   let { widget, inner } = createWidget(CONST_IWillAddLater, {
@@ -23,8 +26,11 @@ function getTrendingWidget(uuid) {
       Object.keys(defaultConfig).forEach((key) => {
         config[key] = widgetData.config.public[key] || defaultConfig[key];
       });
-      headerTitle = widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
-      headerDescription = widgetData.config.public.headerDescription || 'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.';
+      headerTitle =
+        widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
+      headerDescription =
+        widgetData.config.public.headerDescription ||
+        'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.';
       renderCount = widgetData.config.public.initialRenderCount || 3;
       execute(renderCount);
     },
@@ -80,7 +86,7 @@ function getTrendingWidget(uuid) {
     };
     const onOrganizationConfig = () => {
       if (typeof onOrganization === 'string' && onOrganization.length !== 0) {
-        return `user:${onOrganization}`
+        return `user:${onOrganization}`;
       } else {
         return '';
       }
@@ -223,16 +229,10 @@ function getTrendingWidget(uuid) {
         endLoadingScreen();
 
         const _list = doc.querySelector('.js-navigation-container');
-        if (!_list) {
-          sendNewNotification('No entries found<br />url: ' + url(1), {
-            type: 'error',
-            timeout: 3000,
-          });
-          return;
-        }
-        const list = _list.cloneNode(true);
-        const childs = doc.querySelector('.js-navigation-container').children;
-        list.innerHTML = '';
+        const list = _list?.cloneNode(true) || null;
+        const childs =
+          doc.querySelector('.js-navigation-container')?.children || [];
+        if (!!list) list.innerHTML = '';
 
         for (let i = 0; i < renderCount; i++) {
           if (!childs[i]) break;
@@ -302,19 +302,35 @@ function getTrendingWidget(uuid) {
           `<div class="${prefix('vertical')}" ref="header">
             <div class="${prefix('horizontal')}">
               <div class="${prefix('green-ball')}"></div>
-              <span class="${prefix(
-                'header-title'
-              )}">${headerTitle}</span>
+              <span class="${prefix('header-title')}">${headerTitle}</span>
             </div>
-            <span class="${prefix(
-              'header-desc'
-            )}">${headerDescription}</span>
+            <span class="${prefix('header-desc')}">${headerDescription}</span>
           </div>`
         );
 
-        refs.container.aadAppendChild(header);
-        refs.container.appendChild(list);
-        refs.container.aadAppendChild(loadMoreButton);
+        addCustomCSS(`
+          .${prefix('not-found-text')} {
+            border-bottom: 1px solid #1f893e;
+          }
+        `);
+
+        const notFound = render(
+          null,
+          `<div class="aad-w-full aad-center" ref="notFound">
+            <span class="${prefix('header-desc')} ${prefix(
+            'not-found-text'
+          )}">No entries found with the given parameters</span>
+          </div>`
+        );
+
+        if (!!list) {
+          refs.container.aadAppendChild(header);
+          refs.container.appendChild(list);
+          refs.container.aadAppendChild(loadMoreButton);
+        } else {
+          refs.container.aadAppendChild(header);
+          refs.container.appendChild(notFound);
+        }
 
         makeDetailsDynamicResponsive();
         listenEntryClicks();
@@ -440,7 +456,7 @@ function getTrendingWidget(uuid) {
 
   execute(renderCount);
   return {
-    widget
+    widget,
   };
 }
 
@@ -459,7 +475,8 @@ loadNewWidget('entries', getTrendingWidget, {
         {
           field: 'headerDescription',
           type: 'text',
-          placeholder: 'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.',
+          placeholder:
+            'I wanted to do a project, it was going to have a good purpose, it lost its purpose, now it only has a good audience.',
           label: 'Description of the header',
         },
         {
