@@ -103,6 +103,7 @@ function applyDragAndDrop() {
     //for end the dragging opacity costing
     draggble.addEventListener('dragend', () => {
       draggble.classList.remove('aad-dragging');
+      saveWidgetPosition();
     });
   });
   //shit
@@ -162,10 +163,6 @@ async function main() {
 
   loadWidgets();
   printContainers();
-
-  fireError('AAD - Test exception', {
-    extra: {},
-  });
 
   // setWidgetLgCount(3);
 }

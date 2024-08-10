@@ -18,6 +18,100 @@ async function startConference() {
   // updateFrameWidth(1280);
   // updateFrameHeight(633);
 
+  async function showText(textRefs, text, _options) {
+    const defaultOptions = {
+      underline: false,
+      animation: true,
+      fontSize: 80,
+      waitEachWord: 0,
+      waitEachChar: 10,
+      addAtEnd: null,
+    };
+
+    options = { ...defaultOptions, ..._options };
+
+    textRefs.content.innerHTML = '';
+
+    const splitted = text.split('');
+    let isBold = false;
+    let isBigger = false;
+    for (let i = 0; i < splitted.length; i++) {
+      const char = splitted[i];
+      const uuid = generateUUID();
+      const p = prefixer('coming-char', uuid, 'video-editing');
+
+      if (char === '*') {
+        isBold = !isBold;
+        continue;
+      }
+
+      if (char === '#') {
+        isBigger = !isBigger;
+        continue;
+      }
+
+      const multiplier = isBigger ? 1.2 : 1;
+      const fontSize = options.fontSize
+        ? options.fontSize * multiplier
+        : 80 * multiplier;
+
+      addCustomCSS(`
+      .${p('char')} {
+        font-size: ${fontSize}px;
+        transition: all 0.5s;
+        ${isBold ? 'font-weight: bold;' : ''}
+        ${options.animation ? `animation: ${p('come-from-top')} 1s;` : ''}
+        ${char === ' ' ? 'min-width: 30px;' : ''}
+        ${options.underline ? 'text-decoration: underline;' : ''}
+      }
+
+      .${p('animEnd')} {
+        font-size: 120px;
+        color: white;
+      }
+
+      @keyframes ${p('come-from-top')} {
+        0% {
+          opacity: 0;
+          transform: translateY(-100%);
+
+          }
+        30% {
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `);
+
+      const charRefs = {};
+      const charElem = render(
+        charRefs,
+        `
+      <div ref="char" class="${p('char')}">${char}</div>
+    `
+      );
+
+      if (options.animation) {
+        setTimeout(() => {
+          charElem.classList.add(p('animEnd'));
+        }, 500);
+      }
+
+      textRefs.content.appendChild(charElem);
+
+      await aad_sleep(options.waitEachChar);
+      if (options.waitEachWord && char === ' ') {
+        await aad_sleep(options.waitEachWord);
+      }
+    }
+
+    if (options.addAtEnd) {
+      textRefs.content.aadAppendChild(options.addAtEnd);
+    }
+  }
+
   await aad_sleep(200);
 
   const w1refs = {};
@@ -106,100 +200,6 @@ async function startConference() {
 
   const w2c = comeWrapperFrom('left');
   await aad_sleep(1200);
-
-  async function showText(textRefs, text, _options) {
-    const defaultOptions = {
-      underline: false,
-      animation: true,
-      fontSize: 80,
-      waitEachWord: 0,
-      waitEachChar: 10,
-      addAtEnd: null,
-    };
-
-    options = { ...defaultOptions, ..._options };
-
-    textRefs.content.innerHTML = '';
-
-    const splitted = text.split('');
-    let isBold = false;
-    let isBigger = false;
-    for (let i = 0; i < splitted.length; i++) {
-      const char = splitted[i];
-      const uuid = generateUUID();
-      const p = prefixer('coming-char', uuid, 'video-editing');
-
-      if (char === '*') {
-        isBold = !isBold;
-        continue;
-      }
-
-      if (char === '#') {
-        isBigger = !isBigger;
-        continue;
-      }
-
-      const multiplier = isBigger ? 1.2 : 1;
-      const fontSize = options.fontSize
-        ? options.fontSize * multiplier
-        : 80 * multiplier;
-
-      addCustomCSS(`
-        .${p('char')} {
-          font-size: ${fontSize}px;
-          transition: all 0.5s;
-          ${isBold ? 'font-weight: bold;' : ''}
-          ${options.animation ? `animation: ${p('come-from-top')} 1s;` : ''}
-          ${char === ' ' ? 'min-width: 30px;' : ''}
-          ${options.underline ? 'text-decoration: underline;' : ''}
-        }
-
-        .${p('animEnd')} {
-          font-size: 120px;
-          color: white;
-        }
-
-        @keyframes ${p('come-from-top')} {
-          0% {
-            opacity: 0;
-            transform: translateY(-100%);
-
-            }
-          30% {
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `);
-
-      const charRefs = {};
-      const charElem = render(
-        charRefs,
-        `
-        <div ref="char" class="${p('char')}">${char}</div>
-      `
-      );
-
-      if (options.animation) {
-        setTimeout(() => {
-          charElem.classList.add(p('animEnd'));
-        }, 500);
-      }
-
-      textRefs.content.appendChild(charElem);
-
-      await aad_sleep(options.waitEachChar);
-      if (options.waitEachWord && char === ' ') {
-        await aad_sleep(options.waitEachWord);
-      }
-    }
-
-    if (options.addAtEnd) {
-      textRefs.content.aadAppendChild(options.addAtEnd);
-    }
-  }
 
   const textTime = 1200;
 
@@ -588,7 +588,10 @@ async function startConference() {
                   const modal = document.querySelector(
                     '[aad-modal="true"] [ref="inner"]'
                   );
-                  modal.scroll({ top: modal.scrollHeight, behavior: 'smooth' });
+                  modal.scroll({
+                    top: modal.scrollHeight,
+                    behavior: 'smooth',
+                  });
 
                   setTimeout(() => {
                     const modalSave = document.querySelector(
@@ -829,21 +832,22 @@ async function startConference() {
       }
     `);
 
-
     async function showRepositoryPreview() {
+      // const repositoresInTrending = document.querySelectorAll('[href="/trending"]')[0];
+      // repositoresInTrending.click();
 
-      const repositoresInTrending = document.querySelectorAll('[href="/trending"]')[0];
-      repositoresInTrending.click();
-
-      await aad_sleep(2000);
+      // await aad_sleep(2000);
       showTitle('Preview repositories', 5000);
 
-
-      const firstRepo = document.querySelectorAll('[widget-type="trending"] .Box-row')[0];
-      const firstRepoLink = firstRepo.querySelectorAll('a')[0];
+      const firstRepo = document.querySelectorAll(
+        '[widget-type="trending"] .Box-row'
+      )[0];
+      const firstRepoLink = firstRepo.querySelectorAll('a')[1];
       if (!firstRepoLink) {
         await aad_sleep(100);
-        firstRepoLink = document.querySelectorAll('[widget-type="trending"] .Box-row')[1].querySelectorAll('a')[0];
+        firstRepoLink = document
+          .querySelectorAll('[widget-type="trending"] .Box-row')[1]
+          .querySelectorAll('a')[1];
       }
       firstRepoLink.style.position = 'relative';
       const pointer = render(
@@ -860,8 +864,13 @@ async function startConference() {
       firstRepoLink.click();
       pointer.remove();
       await aad_sleep(5000);
-      const modalInner = document.querySelector('[aad-modal="true"] [ref="inner"]');
-      modalInner.scroll({ top: modalInner.scrollHeight/2, behavior: 'smooth' });
+      const modalInner = document.querySelector(
+        '[aad-modal="true"] [ref="inner"]'
+      );
+      modalInner.scroll({
+        top: modalInner.scrollHeight / 2,
+        behavior: 'smooth',
+      });
       await aad_sleep(2000);
       modalInner.scroll({ top: modalInner.scrollHeight, behavior: 'smooth' });
       await aad_sleep(2000);
@@ -871,14 +880,17 @@ async function startConference() {
 
     async function showProfilePreview() {
       await aad_sleep(1000);
-      const developersInTrending = document.querySelectorAll('[href="/trending/developers"]')[0];
+      const developersInTrending = document.querySelectorAll(
+        '[href="/trending/developers"]'
+      )[0];
       developersInTrending.click();
 
       await aad_sleep(3000);
       showTitle('Preview profiles', 5000);
 
-
-      const firstRepo = document.querySelectorAll('[widget-type="trending"] .Box-row')[0];
+      const firstRepo = document.querySelectorAll(
+        '[widget-type="trending"] .Box-row'
+      )[0];
       const firstRepoLink = firstRepo.querySelectorAll('a')[2];
       firstRepoLink.style.position = 'relative';
       const pointer = render(
@@ -895,8 +907,13 @@ async function startConference() {
       firstRepoLink.click();
       pointer.remove();
       await aad_sleep(5000);
-      const modalInner = document.querySelector('[aad-modal="true"] [ref="inner"]');
-      modalInner.scroll({ top: modalInner.scrollHeight/2, behavior: 'smooth' });
+      const modalInner = document.querySelector(
+        '[aad-modal="true"] [ref="inner"]'
+      );
+      modalInner.scroll({
+        top: modalInner.scrollHeight / 2,
+        behavior: 'smooth',
+      });
       await aad_sleep(2000);
       modalInner.scroll({ top: modalInner.scrollHeight, behavior: 'smooth' });
       await aad_sleep(2000);
@@ -908,7 +925,9 @@ async function startConference() {
       await aad_sleep(1000);
       showTitle('Preview entries', 5000);
 
-      const firstRepoLink = document.querySelectorAll('[widget-type="entries"] a')[1]
+      const firstRepoLink = document.querySelectorAll(
+        '[widget-type="entries"] a'
+      )[1];
       firstRepoLink.style.position = 'relative';
       const pointer = render(
         null,
@@ -924,8 +943,13 @@ async function startConference() {
       firstRepoLink.click();
       pointer.remove();
       await aad_sleep(5000);
-      const modalInner = document.querySelector('[aad-modal="true"] [ref="inner"]');
-      modalInner.scroll({ top: modalInner.scrollHeight/2, behavior: 'smooth' });
+      const modalInner = document.querySelector(
+        '[aad-modal="true"] [ref="inner"]'
+      );
+      modalInner.scroll({
+        top: modalInner.scrollHeight / 2,
+        behavior: 'smooth',
+      });
       await aad_sleep(2000);
       modalInner.scroll({ top: modalInner.scrollHeight, behavior: 'smooth' });
       await aad_sleep(2000);
@@ -939,7 +963,8 @@ async function startConference() {
   }
 
   await preview();
-  await aad_sleep(4000);
+
+  await aad_sleep(1000);
 
   const w7refs = {};
   const w7 = render(
@@ -978,18 +1003,32 @@ async function startConference() {
   const w8refs = {};
   const w8 = render(
     w8refs,
-    `<img ref="img" class="aad-come-from-bottom" src="https://aad-ext.vercel.app/sponsorships/kommunity.jpg" />`
+    `<img ref="img" style="background-color: #ffbc01;" class="aad-come-from-bottom" src="https://aad-ext.vercel.app/sponsorships/kommunity.jpg" />`
   );
   w7refs.content.aadAppendChild(w8);
   await aad_sleep(4000);
   w8refs.img.classList.add('aad-go-to-top');
-  await aad_sleep(500);
+  await aad_sleep(1100);
+  w7refs.content.innerHTML = '';
+
+  showText(w7refs, 'Thank you for watching', {
+    animation: false,
+  });
+  await aad_sleep(textTime4);
+  showText(w7refs, 'Maintainer - Murat Kirazkaya', {
+    animation: false,
+  });
+  await aad_sleep(textTime4);
   w7refs.content.innerHTML = '';
 
   removeCustomCSS(w7c);
   const w7g = goWrapperTo('right');
   await aad_sleep(1100);
   removeCustomCSS(w7g);
+
   updateWrapperInner(null);
   await aad_sleep(100);
+
+  updateFrameWidth(-1);
+  updateFrameHeight(-1);
 }

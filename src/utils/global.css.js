@@ -34,7 +34,7 @@ function initGlobalCSS() {
 
     @keyframes aadComeFromBottom {
       0% {
-        transform: translateY(100%);
+        transform: translateY(120%);
       }
       100% {
         transform: translateY(0);
@@ -43,7 +43,7 @@ function initGlobalCSS() {
 
     .aad-go-to-top {
       animation: aadGoToTop 1s ease-in-out;
-      transform: translateY(-100%);
+      transform: translateY(-120%);
     }
 
     @keyframes aadGoToTop {
@@ -51,7 +51,7 @@ function initGlobalCSS() {
         transform: translateY(0);
       }
       100% {
-        transform: translateY(-100%);
+        transform: translateY(-120%);
       }
     }
     `);

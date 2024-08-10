@@ -32,3 +32,8 @@
 - Timing to notifications
 - Network Layer Schema
 - aadRender which able to render new aad components
+
+## 1.1.8
+
+- Change widget position save fixed.
+- 
