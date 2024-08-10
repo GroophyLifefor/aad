@@ -54,5 +54,49 @@ function initGlobalCSS() {
         transform: translateY(-120%);
       }
     }
+
+    /* width */
+    .aad-scroll-x::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    /* Track */
+    .aad-scroll-x::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 5px grey; 
+      border-radius: 10px;
+    }
+    
+    /* Handle */
+    .aad-scroll-x::-webkit-scrollbar-thumb {
+      background: #2d333b; 
+      border-radius: 2.5px;
+    }
+
+    /* Handle on hover */
+    .aad-scroll-x::-webkit-scrollbar-thumb:hover {
+      background: #3a4049; 
+    }
+
+    /* width */
+    .aad-scroll-y::-webkit-scrollbar {
+      height: 5px;
+    }
+
+    /* Track */
+    .aad-scroll-y::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 5px grey; 
+      border-radius: 10px;
+    }
+    
+    /* Handle */
+    .aad-scroll-y::-webkit-scrollbar-thumb {
+      background: #2d333b; 
+      border-radius: 2.5px;
+    }
+
+    /* Handle on hover */
+    .aad-scroll-y::-webkit-scrollbar-thumb:hover {
+      background: #3a4049; 
+    }
     `);
 }

@@ -225,12 +225,46 @@ function getNotificationManager() {
           <div class="${pre('inner')}">
             <span class="${pre('title')}">${config.title}</span>
             <span class="${pre('innerText')}">${e.detail.inner}</span>
+            <div ref="subData" class="aad-w-full">
+            </div>
             <div ref="actions" class="${pre('actions')}"></div>
           </div>
           <div class="${pre('timing')}"></div>
         </div>
         `
     );
+
+    if (!!config.subData) {
+      const subDataUUID = generateUUID();
+      const p = (title) => pre('subData-' + subDataUUID + '-' + title);
+
+      addCustomCSS(`
+        .${p('subdata')} {
+          background-color: #00000011;
+          border: 1px solid #00000033;
+          border-radius: 4px;
+          padding: 8px;
+          font-size: 12px;
+          line-height: 1;
+          font-family: monospace;
+          color: #c5d1de;
+          overflow: auto;
+          height: 200px;
+          resize: none;
+          outline: none;
+        }
+        `);
+
+      let subDataRefs = {};
+      const subData = render(
+        subDataRefs,
+        `
+          <textarea autocorrect="off" wrap="off" spellcheck="false" readonly  class="aad-w-full aad-scroll-x aad-scroll-y ${p('subdata')}">${JSON.stringify(config.subData, null, 2).trim()}</textarea>
+          `
+      );
+
+      notiRefs.subData.aadAppendChild(subData);
+    }
 
     config.actions.forEach((action) => {
       const actionUUID = generateUUID();

@@ -56,13 +56,16 @@ function getGeneralSettingsComp() {
           type: 'wide-button',
           text: 'Open advanced settings (Work In Progress)',
           onClick: (props) => {
+            // /* Video DEMO START */
+            // setTimeout(() => {
+            //   startConference();
+            // }, 1000);
+            // return;
+            // /* Video DEMO END */
+
+
             props.closeModal();
-            /* Video DEMO START */
-            setTimeout(() => {
-              startConference();
-            }, 1000);
-            return;
-            /* Video DEMO END */
+
             createModal(
               'Advanced Settings',
               {

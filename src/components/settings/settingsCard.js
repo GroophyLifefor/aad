@@ -680,4 +680,8 @@ function settingsCard(config, properties, values, onChangesSaved) {
       return settingsContainer;
     }
   );
+
+  return {
+    
+  }
 }

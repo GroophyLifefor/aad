@@ -36,4 +36,5 @@
 ## 1.1.8
 
 - Change widget position save fixed.
-- 
+- New 'entries not found' text rather than crash
+- Error handling improvements

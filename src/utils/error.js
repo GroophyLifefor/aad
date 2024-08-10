@@ -29,7 +29,6 @@ function fireError(message, data) {
     deviceMemory: navigator.deviceMemory || -1,
     hardwareConcurrency: navigator.hardwareConcurrency || -1,
     userAgentData: navigator.userAgentData,
-    GitHubUsername,
   };
 
   const system = {
@@ -41,15 +40,39 @@ function fireError(message, data) {
   };
 
   var manifestData = chrome.runtime.getManifest();
-  const _widgetCounter = widgetCounter;
-  for (let key in _widgetCounter) {
-    if (_widgetCounter.hasOwnProperty(key)) {
-      _widgetCounter[key]--;
+  
+  _widgetCounter = { initialized: false };
+  try {
+    _widgetCounter = JSON.parse(JSON.stringify(widgetCounter || { initialized: false }));
+
+    for (let key in _widgetCounter) {
+      if (_widgetCounter.hasOwnProperty(key)) {
+        _widgetCounter[key]--;
+      }
     }
-  }
-  const _widgetResponsibility = JSON.parse(
-    JSON.stringify(widgetResponsibility)
-  );
+  } catch (e) { }
+
+  _widgetResponsibility = { initialized: false };
+  try {
+    _widgetResponsibility = JSON.parse(
+      JSON.stringify(widgetResponsibility)
+    );
+  } catch (e) { }
+
+  var tokens = { initialized: false };
+  try {
+    tokens = JSON.parse(JSON.stringify(ratelimitRemaning || { initialized: false }));
+  } catch (e) { }
+
+  const aad_containers = { initialized: false };
+  try {
+    aad_containers = JSON.parse(JSON.stringify(containers || { initialized: false }));
+  } catch (e) { }
+
+  const notifications = { initialized: false };
+  try {
+    notifications = JSON.parse(JSON.stringify(notifications || { initialized: false }));
+  } catch (e) { }
 
   console.error(message, {
     ...(data.extra || {}),
@@ -57,33 +80,33 @@ function fireError(message, data) {
     system,
     app: {
       version: manifestData.version,
-      _widgetResponsibility,
-      widgetCounter,
+      widgetResponsibility: _widgetResponsibility,
+      widgetCounter: _widgetCounter,
       ratelimitRemaning: tokens,
-      aad_containers,
-      notifications,
+      aad_containers: aad_containers,
+      notifications: notifications,
     },
   });
 
-  
-
   setTimeout(() => {
     sendNewNotification(
-      "Something went wrong, I'm so sorry for the inconvenience! If it's not too much trouble, could I possibly send the error log to the server so we can work together to find a solution?" +
-        '\n- Error info' +
-        '\n- Limited container info' +
-        '\n- Limited widget info' +
-        '\n- and some other info which might help us to solve the issue.',
+      "Something went wrong, I'm so sorry for the inconvenience! If it's not too much trouble, could I possibly send the error log to the server so we can work together to find a solution?",
       {
+        subData: {
+          appVersion: manifestData.version,
+          errorStack: data.extra.error.stack || '',
+          errorType: data.extra.error.type || '',
+          errorArguments: data.extra.error.arguments || '',
+          errorMessage: data.extra.error.message || '',
+        },
         type: 'error',
-        timeout: 8000,
+        timeout: 12000,
         title: 'Error Handler',
         actions: [
           {
             text: 'No, thanks',
             type: 'default',
-            action: () => {
-            },
+            action: () => {},
           },
           {
             text: 'Send it',
@@ -112,3 +135,18 @@ function fireError(message, data) {
     );
   }, 2000);
 }
+
+window.onerror = (errorMsg, url, lineNumber) => {
+  fireError('AAD - Uncaught Error', {
+    extra: {
+      error: {
+        message: errorMsg,
+        stack: url,
+        arguments: lineNumber,
+        type: 'Uncaught Error',
+      },
+    },
+  });
+  return false;
+};
+
