@@ -453,6 +453,8 @@ function clearFeed() {
           prepareUtils();
           prepareRecentActivity(_feed);
           prepareUsername(_feed);
+          const event = new CustomEvent('onAADLoaded', {});
+          document.dispatchEvent(event);
 
           _feed.innerHTML = '';
           _feed.classList.remove('fade-in');

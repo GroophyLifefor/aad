@@ -1,6 +1,7 @@
 function settingsCard(config, properties, values, onChangesSaved) {
   const uuid = generateUUID();
   const prefix = prefixer('settingsCard', uuid, 'component');
+  const onValueChangeListeners = [];
 
   const getValue = (q) => {
     const qs = q.split('.');
@@ -23,6 +24,8 @@ function settingsCard(config, properties, values, onChangesSaved) {
     }
 
     current[qs[qs.length - 1]] = value;
+
+    onValueChangeListeners.forEach((listener) => listener());
   };
 
   const typeTEXT = (property) => {
@@ -212,7 +215,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
     const html = render(
       refs,
       `
-      <div class="${pre('container')}">
+      <div ref="container" class="${pre('container')}">
         <div class="${pre('header')}">
           <span>${property.label}</span>
         </div>
@@ -225,6 +228,29 @@ function settingsCard(config, properties, values, onChangesSaved) {
       </div>
       `
     );
+
+    if (!!property.if) {
+      const field = property.if.field;
+      const operator = property.if.operator;
+      const value = property.if.value;
+
+      const checkIf = () => {
+        if (operator === 'EQUAL') {
+          if (getValue(field) === value) {
+            if (refs.container.classList.contains('aad-hard-hidden')) {
+              refs.container.classList.remove('aad-hard-hidden');
+            }
+          } else {
+            if (!refs.container.classList.contains('aad-hard-hidden')) {
+              refs.container.classList.add('aad-hard-hidden');
+            }
+          }
+        }
+      }
+
+      checkIf();
+      onValueChangeListeners.push(checkIf);
+    }
 
     if (property.subfields) {
       property.subfields.forEach((subField) => {
@@ -437,7 +463,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
     addCustomCSS(`
       .${pre('input')} {
         padding: 5px 12px;
-        background-color: #2d333b;
+        background-color: ${getColor('modal.inset-bg')};
         border-radius: 8px;
       }
       `);

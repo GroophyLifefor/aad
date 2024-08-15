@@ -87,7 +87,7 @@ function createModal(title, config, modalFactory) {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        background-color: ${getColor('widget.bg')};
+        background-color: ${getColor('modal.bg')};
         border-radius: 4px;
         padding: ${config.padding};
         max-width: ${config.maxWidth};

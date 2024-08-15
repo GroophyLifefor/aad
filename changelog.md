@@ -40,3 +40,9 @@
 - Error handling improvements
 - Slightly bigger aad's custom scrollbar
 - Some scrolls moved to aad's custom scrollbar
+
+## 1.1.9
+
+- Another bug when widget position save fixed.
+- Better support to all themes
+- Trending widget settings improvements

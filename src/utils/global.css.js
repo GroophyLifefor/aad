@@ -14,8 +14,13 @@ function initGlobalCSS() {
       height: 100%;
     }
 
+    .aad-hard-hidden {
+      display: none !important;
+    }
+
     body {
-      background-color: #1c2128;
+      background-color: var(--bgColor-default, var(--color-canvas-default));
+      color: var(--fgColor-default, var(--color-fg-default));
     }
 
     html {

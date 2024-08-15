@@ -47,15 +47,16 @@ function getNewWidgetWidget(uuid, config) {
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: #282f38;
+        background-color: ${getColor('addNewWidget.bg')};
         transition: background-color 0.2s ease-in-out;
         border-radius: 4px;
         cursor: pointer;
         height: 2rem;
+        transition: all 0.3s;
     }
 
     .aad-custom-widget-new-widget-inner-container:hover {
-        background-color: #4e5b6b;
+        filter: brightness(1.1);
     }
     `);
 
@@ -103,13 +104,13 @@ function getNewWidgetWidget(uuid, config) {
         display: flex;
         flex-direction: column;
         padding: 8px;
-        background-color: #262c34E6;
+        background-color: ${getColor('drawer.inset-bg')};
         border-radius: 12px;
         transition: all 0.3s;
       }
 
       .${pre('item')}:hover {
-        background-color: #262c34;
+        filter: brightness(.9);
         transform: scale(1.02);
       }
 

@@ -9,6 +9,14 @@ function fireError(message, data) {
       e,
     };
 
+    if (!data) {
+      data = {};
+    }
+
+    if (!data.extra) {
+      data.extra = {};
+    }
+
     data.extra.error = error;
   } else {
     const e = new Error('AAD - Stack trace purposed error');

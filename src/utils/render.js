@@ -131,6 +131,14 @@ Node.prototype.aadAppendChild = function (newChild) {
   this.appendChild(newChild);
 };
 
+Array.prototype.nmap = function (lambda, exp = '') {
+  if (!Array.isArray(this)) {
+    throw new Error('nmap requires an array');
+  }
+
+  return this.reduce((acc, item) => acc + exp + lambda(item), '');
+};
+
 function render(dictionary, html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -166,6 +174,23 @@ function render(dictionary, html) {
     return parentNodes[0];
   }
   return parentNodes;
+}
+
+/**
+ * @param {object} object
+ * @returns {string}
+ *
+ * @example
+ * const settings = {
+ *  text: 'Matt',
+ *  times: 3,
+ * class: 'aad-w-full aad-center'
+ * };
+ *
+ * const settingsString = o(settings);
+ */
+function o(object) {
+  return JSON.stringify({ data: object }).replaceAll('"', '&quot;');
 }
 
 /*
@@ -206,6 +231,10 @@ function aadRender(dictionary, html) {
                 parameters[param.name] = Number(value);
               } else if (param.type === 'boolean') {
                 parameters[param.name] = value === 'true';
+              } else if (param.type === 'object' || param.type === 'array') {
+                parameters[param.name] = JSON.parse(
+                  value.replaceAll('&quot;', '"')
+                ).data;
               } else {
                 parameters[param.name] = value;
               }
@@ -231,14 +260,13 @@ function aadRender(dictionary, html) {
             }
           });
 
-
           let _params = ' ';
           const length = elementAttributes.length;
           for (let i = 0; i < length; i++) {
             const attr = elementAttributes[i];
             _params += `${attr.name}="${attr.value}" `;
           }
-          parameters._params = _params;       
+          parameters._params = _params;
 
           const componentFunction = component.componentFunction;
           const componentElement = componentFunction(parameters);
@@ -247,25 +275,35 @@ function aadRender(dictionary, html) {
         }
       }
 
-      const ref = element.getAttribute('ref');
-      if (ref) {
-        if (!!dictionary) {
-          if (dictionary.hasOwnProperty(ref)) {
-            let oldVal = dictionary[ref];
-            if (!Array.isArray(oldVal)) {
-              oldVal = [oldVal];
+      function findRefsProcess(element) {
+        const ref = element.getAttribute('ref');
+        if (ref) {
+          if (!!dictionary) {
+            if (dictionary.hasOwnProperty(ref)) {
+              let oldVal = dictionary[ref];
+              if (!Array.isArray(oldVal)) {
+                oldVal = [oldVal];
+              }
+              dictionary[ref] = [...oldVal, element];
+            } else {
+              dictionary[ref] = element;
             }
-            dictionary[ref] = [...oldVal, element];
-          } else {
-            dictionary[ref] = element;
+          }
+        }
+        const children = element.childNodes;
+        for (let i = 0; i < children.length; i++) {
+          if (children[i].nodeType === 1) {
+            findRefs([children[i]]);
           }
         }
       }
-      const children = element.childNodes;
-      for (let i = 0; i < children.length; i++) {
-        if (children[i].nodeType === 1) {
-          findRefs([children[i]]);
-        }
+
+      if (Array.isArray(element)) {
+        element.forEach((el) => {
+          findRefsProcess(el);
+        });
+      } else {
+        findRefsProcess(element);
       }
     }
   }

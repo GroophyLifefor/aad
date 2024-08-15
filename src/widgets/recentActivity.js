@@ -11,7 +11,7 @@ function getRecentActivityWidget(uuid) {
         gap: 12px;
         padding: 8px;
         border-radius: 8px;
-        background-color: rgb(40, 47, 56, 0.6);
+        border: 1px solid ${getColor('recentActivity.item-border')};
       }
 
       .${prefix}-card-top {

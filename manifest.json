@@ -29,8 +29,11 @@
         "src/utils/svg.js",
         "src/utils/networkLayer.js",
 
-        "src/utils/colors/darkDimmed.js",
-        "src/utils/colors/_themeProvider.js",
+        "src/providers/colors/githubTheme.js",
+        "src/providers/colors/themeProvider.js",
+        "src/providers/userEvents/userEventsProvider.js",
+        "src/providers/globalLanguages/globalLanguagesProvider.js",
+        "src/providers/programmingLanguages/programmingLanguagesProvider.js",
 
         "src/utils/css.js",
         "src/utils/global.css.js",
@@ -54,6 +57,8 @@
         "src/components/createModal.js",
         "src/components/loadMore.js",
         "src/components/generalSettings.js",
+        "src/components/settings/sidebar.js",
+        "src/components/settings/advancedSettings.js",
         "src/components/settings/settingsCard.js",
         "src/components/loading.js",
         "src/components/frameModal.js",

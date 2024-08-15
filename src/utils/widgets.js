@@ -5,7 +5,7 @@ function loadNewWidget(name, fn, editModal) {
     widgetReferences[name] = {
       fn,
       editModal: editModal || {
-        properties: []
+        properties: [],
       },
     };
   } else {
@@ -61,7 +61,6 @@ async function preloadImages() {
   addingWidgets.forEach(async (widget) => {
     await preloadImage(widget.image);
   });
-
 }
 
 function getWidgetByUUID(uuid) {
@@ -94,37 +93,43 @@ function setConfigByUUID(uuid, config) {
 }
 
 function saveWidgetPosition() {
-  const containers = [];
-  let isItGoingWell = true;
-  for (let i = 0; i < 4; i++) {
-    const container = document.getElementById('container-' + i);
-    if (!container?.children?.length) {
-      // aadWARN('Container has no children');
-      isItGoingWell = false;
-      continue;
-    }
-    const childs = Array.prototype.slice.call(container.children);
-    let widgets = [];
-    for (let j = 0; j < childs.length; j++) {
-      const child = childs[j];
-      const uuid = child.getAttribute('uuid');
-      const widget = getWidgetByUUID(uuid);
-      if (!widget) {
-        // may newWidget widget but if it will be null
+  function save() {
+    const containers = [];
+    let isItGoingWell = true;
+    for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {
+      const container = document.getElementById('container-' + i);
+      if (!container) {
+        isItGoingWell = false;
         continue;
       }
-      widgets.push({
-        type: widget.type,
-        uuid: widget.uuid,
-        config: widget.config,
+      const childs = Array.prototype.slice.call(container.children);
+      let widgets = [];
+      for (let j = 0; j < childs.length; j++) {
+        const child = childs[j];
+        const uuid = child.getAttribute('uuid');
+        const widget = getWidgetByUUID(uuid);
+        if (!widget) {
+          // may newWidget widget but if it will be null
+          continue;
+        }
+        widgets.push({
+          type: widget.type,
+          uuid: widget.uuid,
+          config: widget.config,
+        });
+      }
+      containers.push({
+        index: i,
+        widgets: widgets,
       });
     }
-    containers.push({
-      index: i,
-      widgets: widgets,
-    });
+    if (isItGoingWell) setContainers({ containers: containers });
   }
-  if (isItGoingWell) setContainers({ containers: containers });
+
+  save();
+  setTimeout(() => {
+    save();
+  }, 300);
 }
 
 function createNewWidget(containerIndex, type) {

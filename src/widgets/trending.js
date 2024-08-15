@@ -1,41 +1,103 @@
 function getTrendingWidget(uuid) {
-  let onConfigChanged = (config) => {};
+  const memo = {};
+  let onConfigChanged = () => {
+    memo.onConfigChanged();
+  };
   let { widget, inner } = createWidget(CONST_IWillAddLater, {
     title: 'Trending',
     type: 'trending',
     widgetId: uuid,
     onConfigChanged: onConfigChanged,
   });
+
+  const defaultConfig = {
+    // 'repositories' | 'developers'
+    trendingType: 'repositories',
+    // ?spoken_language_code=ak
+    repo_spokenLanguage: 'Any',
+    // /trending/c++
+    repo_language: 'Any',
+    // ?since=daily | weekly | monthly
+    repo_since: 'daily',
+
+    // /trending/developers/javascript
+    dev_programmingLanguage: 'Any',
+    // ?since=daily | weekly | monthly
+    dev_since: 'daily',
+    // ?sponsorable=1 - 'yes' | 'no'
+    dev_sponsorable: 'no',
+  };
+
   const prefix = prefixer('trending', uuid, 'widget');
   let refs = {};
+  let topLayerRefs = {};
+  let config = {};
   const widgetData = getWidgetByUUID(uuid);
-  let url = widgetData.config.public.url || 'https://github.com/trending';
-  let containerQuery =
-    widgetData.config.public.containerQuery || 'main > .container-lg > .Box';
-  let itemQuery = widgetData.config.public.itemQuery || '.Box-row';
+
+  Object.keys(defaultConfig).forEach((key) => {
+    config[key] = widgetData.config.public[key] || defaultConfig[key];
+  });
+
+  function saveConfig() {
+    widgetData.config.public = config;
+    setConfigByUUID(uuid, widgetData);
+  }
 
   // init cache
-  setConfigByUUID(uuid, { public: { url, containerQuery, itemQuery } });
+  setConfigByUUID(uuid, {
+    public: config,
+  });
 
-  onConfigChanged = (config) => {
-    url = config.public.url;
-    containerQuery = config.public.containerQuery;
-    itemQuery = config.public.itemQuery;
+  memo.onConfigChanged = () => {
+    const widgetData = getWidgetByUUID(uuid);
+    Object.keys(defaultConfig).forEach((key) => {
+      config[key] = widgetData.config.public[key] || defaultConfig[key];
+    });
+    saveConfig();
     execute();
   };
 
-  function saveUrl() {
-    setConfigByUUID(uuid, { public: { url } });
-    sendNewNotification('Trending page has been saved.', {
-      type: 'success',
-      timeout: 3000,
-    });
+  function buildUrl() {
+    let url = 'https://github.com/trending';
+
+    if (config.trendingType === 'repositories') {
+      // adding programming language
+      if (config.repo_language !== 'Any') {
+        url += `/${config.repo_language}`;
+      }
+
+      // adding spoken language
+      if (config.repo_spokenLanguage !== 'Any') {
+        url += `?spoken_language_code=${config.repo_spokenLanguage}`;
+      }
+
+      // adding since
+      url += `?since=${config.repo_since}`;
+    } else if (config.trendingType === 'developers') {
+      url += '/developers';
+
+      // adding programming language
+      if (config.dev_programmingLanguage !== 'Any') {
+        url += `/${config.dev_programmingLanguage}`;
+      }
+
+      // adding since
+      url += `?since=${config.dev_since}`;
+
+      // adding sponsorable
+      if (config.dev_sponsorable === 'yes') {
+        url += `?sponsorable=1`;
+      }
+    }
+
+    return url;
   }
 
   function buildTemplate() {
     addCustomCSS(`
       .${prefix('container')} {
         overflow-x: auto;
+        position: relative;
       }
   
       .${prefix('container')} .Box {
@@ -117,14 +179,14 @@ function getTrendingWidget(uuid) {
     const renderTrendings = (data) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(data, 'text/html');
-      const trending = doc.querySelector(containerQuery);
+      const trending = doc.querySelector('main > .container-lg > .Box');
 
       if (!trending) {
         console.error('Failed to find trending');
         return;
       }
 
-      const trendingCards = trending.querySelectorAll(itemQuery);
+      const trendingCards = trending.querySelectorAll('.Box-row');
 
       trendingCards.forEach((card) => {
         card.remove();
@@ -140,9 +202,38 @@ function getTrendingWidget(uuid) {
         applyJS(renderCount * 2);
       });
 
+      addCustomCSS(`
+        .${prefix('top-layer')} {	
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, .05);
+          backdrop-filter: blur(2px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          color: white;
+          font-size: 24px;
+          font-weight: bold;
+          z-index: 100;
+        }
+      `);
+
+      topLayerRefs = {};
+      const topLayer = render(
+        topLayerRefs,
+        `
+        <div ref="layer" class="${prefix('top-layer')} aad-hard-hidden">
+        </div>
+        `
+      );
+
       trending.appendChild(node);
       refs.container.innerHTML = '';
       refs.container.aadAppendChild(trending);
+      refs.container.aadAppendChild(topLayer);
     };
 
     const keepResponsive = () => {
@@ -174,6 +265,27 @@ function getTrendingWidget(uuid) {
       applyWidth();
     };
 
+    function showTextOnTopLayer(text) {
+      const topLayer = topLayerRefs.layer;
+      topLayer.innerText = text;
+
+      if (topLayer.classList.contains('aad-hard-hidden')) {
+        topLayer.classList.remove('aad-hard-hidden');
+      }
+
+      const close = () => {
+        if (!topLayer.classList.contains('aad-hard-hidden')) {
+          topLayer.classList.add('aad-hard-hidden');
+        }
+      };
+
+      const updateText = (text) => {
+        topLayer.innerText = text;
+      };
+
+      return { close, updateText };
+    }
+
     const changeUrl = () => {
       const loadRepositoryPreview = (url, config) => {
         let closeLoading = null;
@@ -187,6 +299,18 @@ function getTrendingWidget(uuid) {
             prefix: prefix('modal-repository-preview'),
             onLoaded: (dom, close) => {
               closeLoading();
+
+              const tbody = dom?.querySelector('tbody');
+              const skeletons = tbody?.querySelectorAll(
+                '.Skeleton.Skeleton--text'
+              );
+              skeletons?.forEach((skeleton) => {
+                const parent = skeleton.parentElement;
+                parent.style.fontSize = '11px';
+                parent.style.fontWeight = 'normal';
+                parent.style.opacity = '60%';
+                skeleton.outerHTML = 'Cannot loaded data';
+              });
 
               if (config.freeRedirect === true) {
                 const links = dom?.querySelectorAll('a') || [];
@@ -242,42 +366,126 @@ function getTrendingWidget(uuid) {
             }
             const splitted = href.split('/');
 
+            function parseHref(href) {
+              const __config = {
+                trendingType: 'repositories',
+                repo_spokenLanguage: 'Any',
+                repo_language: 'Any',
+                repo_since: 'daily',
+                dev_programmingLanguage: 'Any',
+                dev_since: 'daily',
+                dev_sponsorable: 'no',
+              };
+
+              // Check if the href contains 'developers'
+              if (href.includes('/trending/developers')) {
+                __config.trendingType = 'developers';
+
+                // Extract the programming language
+                const devLangMatch = href.match(
+                  /\/trending\/developers\/([^?]+)/
+                );
+                if (devLangMatch && devLangMatch[1]) {
+                  __config.dev_programmingLanguage = devLangMatch[1];
+                }
+
+                // Extract the 'since' period
+                const devSinceMatch = href.match(/since=([^&]+)/);
+                if (devSinceMatch && devSinceMatch[1]) {
+                  __config.dev_since = devSinceMatch[1];
+                }
+
+                // Check if 'sponsorable' is present
+                if (href.includes('sponsorable=1')) {
+                  __config.dev_sponsorable = 'yes';
+                }
+              } else {
+                __config.trendingType = 'repositories';
+
+                // Extract the programming language
+                const repoLangMatch = href.match(/\/trending\/([^?]+)/);
+                if (repoLangMatch && repoLangMatch[1]) {
+                  __config.repo_language = repoLangMatch[1];
+                }
+
+                // Extract the 'since' period
+                const repoSinceMatch = href.match(/since=([^&]+)/);
+                if (repoSinceMatch && repoSinceMatch[1]) {
+                  __config.repo_since = repoSinceMatch[1];
+                }
+
+                // Extract the spoken language code, if present
+                const spokenLangMatch = href.match(
+                  /spoken_language_code=([^&]+)/
+                );
+                if (spokenLangMatch && spokenLangMatch[1]) {
+                  __config.repo_spokenLanguage = spokenLangMatch[1];
+                }
+              }
+
+              return __config;
+            }
+
+            const tryUnderstandValidOperations = () => {
+              var __config = parseHref(href);
+              config.trendingType = __config.trendingType;
+              if (__config.trendingType === 'repositories') {
+                config.repo_spokenLanguage = __config.repo_spokenLanguage;
+                config.repo_language = __config.repo_language;
+                config.repo_since = __config.repo_since;
+              } else if (__config.trendingType === 'developers') {
+                config.dev_programmingLanguage =
+                  __config.dev_programmingLanguage;
+                config.dev_since = __config.dev_since;
+                config.dev_sponsorable = __config.dev_sponsorable;
+              }
+              saveConfig();
+              execute();
+            };
+
             // check is developers
             if (splitted[1] === 'trending' && splitted[2] === 'developers') {
-              url = 'https://github.com/trending/developers';
-              saveUrl();
+              config.trendingType = 'developers';
+              saveConfig();
               execute();
               return;
             }
 
             // check is trending
             if (href === '/trending') {
-              url = 'https://github.com/trending';
-              saveUrl();
+              config.trendingType = 'repositories';
+              saveConfig();
               execute();
               return;
             }
+
+            const { close, updateText } = showTextOnTopLayer(
+              'Checking is repository...'
+            );
 
             // check is repository
             APIRequest(
               'https://api.github.com/repos/' + splitted[1] + '/' + splitted[2]
             ).then((res) => {
               if (res.status === 200) {
+                close();
                 loadRepositoryPreview('https://github.com' + href, {
                   freeRedirect: true,
                 });
               } else {
+                updateText('Checking is user...');
+
                 // check is user
                 APIRequest('https://api.github.com/users/' + splitted[1]).then(
                   (res) => {
                     if (res.status === 200) {
+                      close();
                       loadUserPreview('https://github.com' + href, {
                         freeRedirect: true,
                       });
                     } else {
-                      url = 'https://github.com' + href;
-                      saveUrl();
-                      execute();
+                      close();
+                      tryUnderstandValidOperations();
                     }
                   }
                 );
@@ -293,6 +501,7 @@ function getTrendingWidget(uuid) {
       'loader-container'
     )}"><div class="${prefix('loader')}"></div></div>`;
 
+    const url = buildUrl();
     if (Cache.has(url)) {
       renderTrendings(Cache.get(url));
       keepResponsive();
@@ -327,24 +536,145 @@ function getTrendingWidget(uuid) {
   return { widget };
 }
 
+const trending_spoken_languages = globalLanguagesDataset.map((x) => {
+  return {
+    label: x.LanguageName,
+    value: x['639-1'],
+  };
+});
+
+const trending_programming_languages = programmingLanguagesDataset.map((x) => {
+  return {
+    label: x.LanguageName,
+    value: x.shortName,
+  };
+});
+
 loadNewWidget('trending', getTrendingWidget, {
   properties: [
     {
-      field: 'url',
-      type: 'text',
-      label: 'URL',
-      subfields: [
+      field: 'trendingType',
+      type: 'select',
+      label: 'Trending Type',
+      options: [
         {
-          field: 'containerQuery',
-          type: 'text',
-          label: 'Container Query',
-          readonly: true,
+          label: 'Repositories',
+          value: 'repositories',
         },
         {
-          field: 'itemQuery',
-          type: 'text',
-          label: 'Item Query',
-          readonly: true,
+          label: 'Developers',
+          value: 'developers',
+        },
+      ],
+    },
+    {
+      if: {
+        field: 'trendingType',
+        operator: 'EQUAL',
+        value: 'repositories',
+      },
+      type: 'group',
+      label: 'Trending Repositories',
+      subfields: [
+        {
+          field: 'repo_spokenLanguage',
+          type: 'select',
+          label: 'Spoken Language',
+          options: [
+            {
+              label: 'Any',
+              value: 'Any',
+            },
+            ...trending_spoken_languages,
+          ],
+        },
+        {
+          field: 'repo_language',
+          type: 'select',
+          label: 'Programming Language',
+          options: [
+            {
+              label: 'Any',
+              value: 'Any',
+            },
+            ...trending_programming_languages,
+          ],
+        },
+        {
+          field: 'repo_since',
+          type: 'select',
+          label: 'Since',
+          options: [
+            {
+              label: 'Daily',
+              value: 'daily',
+            },
+            {
+              label: 'Weekly',
+              value: 'weekly',
+            },
+            {
+              label: 'Monthly',
+              value: 'monthly',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      if: {
+        field: 'trendingType',
+        operator: 'EQUAL',
+        value: 'developers',
+      },
+      type: 'group',
+      label: 'Trending Developers',
+      subfields: [
+        {
+          field: 'dev_programmingLanguage',
+          type: 'select',
+          label: 'Programming Language',
+          options: [
+            {
+              label: 'Any',
+              value: 'Any',
+            },
+            ...trending_programming_languages,
+          ],
+        },
+        {
+          field: 'repo_since',
+          type: 'select',
+          label: 'Since',
+          options: [
+            {
+              label: 'Daily',
+              value: 'daily',
+            },
+            {
+              label: 'Weekly',
+              value: 'weekly',
+            },
+            {
+              label: 'Monthly',
+              value: 'monthly',
+            },
+          ],
+        },
+        {
+          field: 'dev_sponsorable',
+          type: 'select',
+          label: 'Sponsorable',
+          options: [
+            {
+              label: 'Yes, Sponsorable',
+              value: 'yes',
+            },
+            {
+              label: 'No, Not Sponsorable',
+              value: 'no',
+            },
+          ],
         },
       ],
     },

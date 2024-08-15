@@ -31,6 +31,7 @@ function applyWidgetResponsibility() {
     overflow-y: auto;
     width: 100%;
     height: calc(100dvh - 66.5px);
+    background-color: ${getColor('feed.bg')}
   }
 
   .add-custom-feed > * > * > * {

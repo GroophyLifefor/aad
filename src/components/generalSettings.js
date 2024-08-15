@@ -73,22 +73,23 @@ function getGeneralSettingsComp() {
                 maxHeight: 'none',
               },
               ({ closeModal }) => {
-                const uuid = generateUUID();
-                const prefix = prefixer('advanced-settings', uuid, 'component');
+                // const uuid = generateUUID();
+                // const prefix = prefixer('advanced-settings', uuid, 'component');
 
-                const advancedSettingRefs = {};
-                const advancedSettingHTML = render(
-                  advancedSettingRefs,
-                  `
-                  <div ref="${prefix(
-                    'container'
-                  )}" style="width: calc(100dvw - 48px); height: calc(100dvh - 80px);">
-                    Work in progress
-                  </div>
-                  `
-                );
+                // const advancedSettingRefs = {};
+                // const advancedSettingHTML = render(
+                //   advancedSettingRefs,
+                //   `
+                //   <div ref="${prefix(
+                //     'container'
+                //   )}" style="width: calc(100dvw - 48px); height: calc(100dvh - 80px);">
+                //     Work in progress
+                //   </div>
+                //   `
+                // );
+                // return advancedSettingHTML;
 
-                return advancedSettingHTML;
+                return getAdvancedSettings().node;
               }
             );
           },
