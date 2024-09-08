@@ -62,6 +62,44 @@ function getPatFromStorage() {
   });
 }
 
+function getPatFromStorageCB(callback) {
+  chrome.storage.local.get(['pat'], (items) => {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError);
+      callback('');
+    } else {
+      callback(items.pat || '');
+    }
+  });
+}
+
+
+function setPatToStorage(pat) {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.set({ pat }, () => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        sendNewNotification('PAT Token is updated.', {
+          type: 'info',
+          timeout: 5000,
+          title: 'Recomended action',
+          actions: [
+            {
+              text: 'Reload page (Reinitializes scripts)',
+              type: 'info',
+              action: () => {
+                window.location.reload();
+              },
+            },
+          ],
+        });
+        resolve();
+      }
+    });
+  });
+}
+
 async function checkIsValidToken(token) {
   const fetched = await aad_fetch('https://api.github.com/user', {
     headers: {

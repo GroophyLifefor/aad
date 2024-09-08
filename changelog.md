@@ -46,3 +46,30 @@
 - Another bug when widget position save fixed.
 - Better support to all themes
 - Trending widget settings improvements
+
+## 1.2.0
+
+- Added border to common modals
+- Settings fully changed
+- Fixed some widget based bugs
+
+## 1.2.1
+
+- Added send metrics option to settings (by default true in whitelist but I want to keep the default off depending on 
+the number of users)
+- Metrics back-end improvements and most metrics will be public, actually already public right now too
+- Now container max count changed 4 to 16 (I hope it's enough, I made because of ultra-wide monitors)
+- Settings navigation are navigating now :D
+
+## 1.2.2
+
+- Now when you reach min version, you will see a notification about the new version.
+- |-> and when you reach hard min version, you will see a modal to update. 
+- In the entries widget, now you can filter by
+- |-> specific label
+- |-> specific assignee
+- |-> specific CIStatus like success, failed, pending as mergeable or not mergeable
+- |-> specific review status like approved, changes requested, review by specific user
+- In the trending widget, now you can change initial render count in settings.
+- New term added as quick look, like right now you can quick look to GitHub notifications with clicking the notification icon.
+- Trending widget a little bit improved in UI so know not has a horizontal scrollbar and easier to customize.

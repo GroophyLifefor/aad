@@ -39,6 +39,34 @@ function getGeneralSettingsComp() {
   );
 
   refs.settings.addEventListener('click', () => {
+    createModal(
+      'Advanced Settings',
+      {
+        // maxWidth: 'none',
+        // maxHeight: 'none',
+      },
+      ({ closeModal }) => {
+        // const uuid = generateUUID();
+        // const prefix = prefixer('advanced-settings', uuid, 'component');
+
+        // const advancedSettingRefs = {};
+        // const advancedSettingHTML = render(
+        //   advancedSettingRefs,
+        //   `
+        //   <div ref="${prefix(
+        //     'container'
+        //   )}" style="width: calc(100dvw - 48px); height: calc(100dvh - 80px);">
+        //     Work in progress
+        //   </div>
+        //   `
+        // );
+        // return advancedSettingHTML;
+
+        // return getAdvancedSettings().node;
+        return getNewSettings().node;
+      }
+    );
+    return;
     let _widgets = widgetResponsibility.breaks;
     let _containers = containerSettings;
 
@@ -50,6 +78,7 @@ function getGeneralSettingsComp() {
     settingsCard(
       {
         title: 'Widget Responsibilty Settings',
+        border: 'none'
       },
       [
         {
@@ -69,8 +98,8 @@ function getGeneralSettingsComp() {
             createModal(
               'Advanced Settings',
               {
-                maxWidth: 'none',
-                maxHeight: 'none',
+                // maxWidth: 'none',
+                // maxHeight: 'none',
               },
               ({ closeModal }) => {
                 // const uuid = generateUUID();
@@ -89,7 +118,8 @@ function getGeneralSettingsComp() {
                 // );
                 // return advancedSettingHTML;
 
-                return getAdvancedSettings().node;
+                // return getAdvancedSettings().node;
+                return getNewSettings().node;
               }
             );
           },

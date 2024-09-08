@@ -139,6 +139,7 @@ function createWidget(inner, config) {
     settingsCard(
       {
         title: 'Edit widget config',
+        border: 'none'
       },
       widgetReferences[config.type].editModal?.properties || [],
       structuredClone(widget?.config?.public || {}),

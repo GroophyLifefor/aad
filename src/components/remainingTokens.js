@@ -38,5 +38,5 @@ function getRemainingTokens() {
     }
   });
 
-  return container;
+  return isLocal ? container : null;
 }

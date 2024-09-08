@@ -13,6 +13,7 @@ async function createFrameModal(props) {
     const parser = new DOMParser();
     const htmlDocument = parser.parseFromString(data, 'text/html');
 
+    // Add CSS
     const cssLinks = htmlDocument.querySelectorAll('link[rel="stylesheet"]');
     const cssUUIDs = [];
     cssLinks.forEach((link) => {

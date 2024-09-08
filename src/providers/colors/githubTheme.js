@@ -14,7 +14,23 @@ const aadTheme_GitHub = {
   },
   modal: {
     bg: 'var(--bgColor-default, var(--color-canvas-default))',
-    'inset-bg': 'var(--bgColor-muted, var(--color-canvas-inset))'
+    'inset-bg': 'var(--bgColor-muted, var(--color-canvas-inset))',
+    border: 'var(--borderColor-default)',
+    'hover-bg': 'var(--control-transparent-bgColor-hover, var(--color-action-list-item-default-hover-bg))',
+  },
+
+  'text-md': {
+    color: 'var(--fgColor-default)',
+    'font-size': 'var(--text-body-size-medium)',
+    'font-weight': 'var(--base-text-weight-normal)',
+    'line-height': 'var(--text-body-lineHeight-medium)',
+  },
+
+  'text-sm': {
+    color: 'var(--fgColor-muted)',
+    'font-size': 'var(--text-body-size-small)',
+    'font-weight': 'var(--base-text-weight-normal)',
+    'line-height': 'var(--text-body-lineHeight-small)',
   },
   
   drawer: {
@@ -26,7 +42,8 @@ const aadTheme_GitHub = {
       bg: 'transparent',
       border: 'var(--button-default-borderColor-rest)',
       iconFill: 'var(--fgColor-muted, var(--color-fg-muted))',
-    }
+    },
+    border: 'var(--borderColor-default)',
   },
 
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AAD - Highly Customizable GitHub",
-  "version": "1.1.9",
+  "version": "1.2.2",
   "description": "GitHub interface supporter for lazy developers",
   "permissions": ["storage", "unlimitedStorage"],
   "browser_specific_settings": {
@@ -28,12 +28,15 @@
       "js": [
         "src/utils/svg.js",
         "src/utils/networkLayer.js",
+        "src/utils/clientId.js",
+        "src/utils/metrics.js",
 
         "src/providers/colors/githubTheme.js",
         "src/providers/colors/themeProvider.js",
         "src/providers/userEvents/userEventsProvider.js",
         "src/providers/globalLanguages/globalLanguagesProvider.js",
         "src/providers/programmingLanguages/programmingLanguagesProvider.js",
+        "src/providers/storage/storageProvider.js",
 
         "src/utils/css.js",
         "src/utils/global.css.js",
@@ -58,6 +61,9 @@
         "src/components/loadMore.js",
         "src/components/generalSettings.js",
         "src/components/settings/sidebar.js",
+        "src/components/settings/settingsInputNumber.js",
+        "src/components/settings/settingsGroup.js",
+        "src/components/settings/newSettings.js",
         "src/components/settings/advancedSettings.js",
         "src/components/settings/settingsCard.js",
         "src/components/loading.js",
@@ -65,6 +71,7 @@
         "src/components/githubCard.js",
         "src/components/notificationManager.js",
         "src/components/drawer.js",
+        "src/components/quickLook_GitHubNotifications.js",
 
         "src/widgets/profile.js",
         "src/widgets/recentActivity.js",

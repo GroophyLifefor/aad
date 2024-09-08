@@ -54,6 +54,12 @@ function loadWidgetResponsibility() {
         },
         items.widgetResponsibility
       );
+      // widgetResponsibility.count max of size counts
+      widgetResponsibility.totalWidgetCount = Math.max(
+        widgetResponsibility.breaks.sm.count,
+        widgetResponsibility.breaks.md.count,
+        widgetResponsibility.breaks.lg.count
+      );
     } else {
       saveWidgetResponsibility({
         uuid: '',

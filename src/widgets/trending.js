@@ -11,6 +11,7 @@ function getTrendingWidget(uuid) {
   });
 
   const defaultConfig = {
+    initialRenderCount: 3,
     // 'repositories' | 'developers'
     trendingType: 'repositories',
     // ?spoken_language_code=ak
@@ -98,6 +99,15 @@ function getTrendingWidget(uuid) {
       .${prefix('container')} {
         overflow-x: auto;
         position: relative;
+      }
+
+      .${prefix('container')} .Box-header {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .${prefix('container')} .Box-header .table-list-header-toggle {
+        flex-wrap: wrap;
       }
   
       .${prefix('container')} .Box {
@@ -529,7 +539,7 @@ function getTrendingWidget(uuid) {
 
   function execute() {
     buildTemplate();
-    applyJS(3);
+    applyJS(config.initialRenderCount);
   }
 
   execute();
@@ -552,6 +562,14 @@ const trending_programming_languages = programmingLanguagesDataset.map((x) => {
 
 loadNewWidget('trending', getTrendingWidget, {
   properties: [
+    {
+      field: 'initialRenderCount',
+      type: 'number',
+      placeholder: '3',
+      label: 'Initial render count of entries',
+      min: 1,
+      max: 20,
+    },
     {
       field: 'trendingType',
       type: 'select',

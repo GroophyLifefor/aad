@@ -9,6 +9,22 @@ const notifications = {
   data: [],
 };
 
+/**
+ * Sends a new notification event and returns a unique identifier for the notification.
+ *
+ * This function generates a unique identifier (UUID) for the notification, formats the 
+ * inner text by replacing newlines with `<br />` tags, and creates a custom event named 
+ * 'onNewNotification' with the notification details. The event is then dispatched to the 
+ * document. Additionally, the notification data is pushed to a global `notifications` object.
+ *
+ * @param {string} inner - The inner content of the notification, which can include text or HTML.
+ * @param {Object} config - The configuration object for the notification.
+ * @param {string} [config.type='default'] - The type of notification ('info', 'success', 'warning', 'error', 'default').
+ * @param {number|null} [config.timeout=null] - The duration in milliseconds after which the notification should automatically close. If null, the notification does not auto-close.
+ * @param {Array<Object>} [config.actions=[]] - An array of action objects, each containing a text label and a callback function to execute when clicked.
+ * @param {string} [config.title='Notification'] - The title of the notification.
+ * @returns {string} - The unique identifier (UUID) of the newly created notification.
+ */
 function sendNewNotification(inner, config) {
   const uuid = generateUUID();
   const event = new CustomEvent('onNewNotification', {

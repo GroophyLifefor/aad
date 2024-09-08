@@ -594,6 +594,7 @@ function settingsCard(config, properties, values, onChangesSaved) {
     {
       header: false,
       padding: '0px',
+      border: !!config.border ? config.border : undefined,
     },
     ({ closeModal }) => {
       const uuid = generateUUID();

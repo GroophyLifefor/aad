@@ -101,5 +101,23 @@ function initGlobalCSS() {
     .aad-scroll-y::-webkit-scrollbar-thumb:hover {
       background: #3a4049; 
     }
+
+    .aad-medium-text {
+      color: ${getColor('text-md.color')};
+      font-size: ${getColor('text-md.font-size')};
+      font-weight: ${getColor('text-md.font-weight')};
+      line-height: ${getColor('text-md.line-height')};
+    }
+
+    .aad-small-text {
+      color: ${getColor('text-sm.color')};
+      font-size: ${getColor('text-sm.font-size')};
+      font-weight: ${getColor('text-sm.font-weight')};
+      line-height: ${getColor('text-sm.line-height')};
+    }
+
+    .aad-m-0-hard {
+      margin: 0 !important;
+    }
     `);
 }

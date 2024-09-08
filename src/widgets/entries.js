@@ -7,6 +7,33 @@ function getTrendingWidget(uuid) {
     visibilityType: 'public & private',
     onOrganization: '',
     sort: 'recently-updated',
+
+    // WIP
+    // Array | 'no-label'
+    // OR SYNTAX: label:"bug","wip"
+    // AND SYNTAX: label:"bug" label:"wip"
+    // For now only one label is supported, empty string means no query
+    labels: '',
+    assignee: GitHubUsername,
+    // 'all' | 'success' | 'failure' | 'pending'
+    CIStatus: 'all',
+    /**
+      'all' 
+      | 'no review' -> 'review:none'
+      | 'review required' -> 'review:required'
+      | 'approved review' -> 'review:approved'
+      | 'changes requested review' -> 'review:changes-requested'
+      | 'reviewed by specific user' -> 'reviewed-by:@me'
+      | 'not reviewed to specific user' -> '-reviewed-by:@me'
+      | 'Awaiting review from specific user' -> 'review-requested:@me'
+      | 'Awaiting review from specific user that someone has asked you directly to review' -> 'user-review-requested:@me'
+      | Disabled 'Awaiting review from your team' -> 'team-review-requested:github/docs'
+    **/
+    reviewType: 'all',
+    reviewedByAccount: GitHubUsername,
+    notReviewedByAccount: GitHubUsername,
+    awaitingReviewFromAccount: GitHubUsername,
+    awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview: GitHubUsername,
   };
 
   const widgetData = getWidgetByUUID(uuid);
@@ -24,7 +51,7 @@ function getTrendingWidget(uuid) {
     onConfigChanged: () => {
       const widgetData = getWidgetByUUID(uuid);
       Object.keys(defaultConfig).forEach((key) => {
-        config[key] = widgetData.config.public[key] || defaultConfig[key];
+        config[key] = widgetData.config.public[key] === '' ? '' : widgetData.config.public[key] || defaultConfig[key];
       });
       headerTitle =
         widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
@@ -42,7 +69,7 @@ function getTrendingWidget(uuid) {
   let entries = [];
 
   Object.keys(defaultConfig).forEach((key) => {
-    config[key] = widgetData.config.public[key] || defaultConfig[key];
+    config[key] = widgetData.config.public[key] === '' ? '' : widgetData.config.public[key] || defaultConfig[key];
   });
 
   config.headerTitle = headerTitle;
@@ -61,6 +88,15 @@ function getTrendingWidget(uuid) {
       visibilityType,
       onOrganization,
       sort,
+
+      labels,
+      assignee,
+      CIStatus,
+      reviewType,
+      reviewedByAccount,
+      notReviewedByAccount,
+      awaitingReviewFromAccount,
+      awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview,
     } = config;
 
     const authorConfig = () => (author ? `author:${author}` : '');
@@ -101,6 +137,41 @@ function getTrendingWidget(uuid) {
       'best-match': 'sort:relevance-desc',
     };
 
+    const labelsConfig = () => {
+      if ((labels || '').trim() === '') {
+        return '';
+      } else {
+        return `label:${labels}`;
+      }
+    }
+
+    const assigneeConfig = () => {
+      if ((assignee || '').trim() === '') {
+        return '';
+      } else {
+        return `assignee:${assignee}`;
+      }
+    }
+
+    const CIStatusConfig = {
+      all: '',
+      success: 'status:success',
+      failure: 'status:failure',
+      pending: 'status:pending',
+    };
+
+    const reviewTypeConfig = {
+      all: '',
+      'no review': 'review:none',
+      'review required': 'review:required',
+      'approved review': 'review:approved',
+      'changes requested review': 'review:changes-requested',
+      'reviewed by specific user': `reviewed-by:@${reviewedByAccount}`,
+      'not reviewed to specific user': `-reviewed-by:@${notReviewedByAccount}`,
+      'Awaiting review from specific user': `review-requested:@${awaitingReviewFromAccount}`,
+      'Awaiting review from specific user that someone has asked you directly to review': `user-review-requested:@${awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview}`,
+    };
+
     url = (page) => {
       let temp = `https://github.com/issues?page=${page}&q=`;
       temp += encodeURIComponent(' ' + authorConfig());
@@ -110,6 +181,10 @@ function getTrendingWidget(uuid) {
       temp += encodeURIComponent(' ' + visibilityTypeConfig[visibilityType]);
       temp += encodeURIComponent(' ' + onOrganizationConfig());
       temp += encodeURIComponent(' ' + sortConfig[sort]);
+      temp += encodeURIComponent(' ' + labelsConfig());
+      temp += encodeURIComponent(' ' + assigneeConfig());
+      temp += encodeURIComponent(' ' + CIStatusConfig[CIStatus]);
+      temp += encodeURIComponent(' ' + reviewTypeConfig[reviewType]);
       return temp;
     };
   }
@@ -492,6 +567,11 @@ loadNewWidget('entries', getTrendingWidget, {
       label: 'Entries by this author',
     },
     {
+      field: 'assignee',
+      type: 'github_user',
+      label: 'Entries by this assignee',
+    },
+    {
       field: 'openType',
       type: 'select',
       label: 'Type(s) of entries',
@@ -546,6 +626,136 @@ loadNewWidget('entries', getTrendingWidget, {
       ],
     },
     {
+      field: 'reviewType',
+      type: 'select',
+      label: 'review status of entries',
+      options: [
+        {
+          label: 'Any',
+          value: 'all',
+        },
+        {
+          label: 'No review',
+          value: 'no review',
+        },
+        {
+          label: 'Review Required',
+          value: 'review required',
+        },
+        {
+          label: 'Approved Review',
+          value: 'approved review',
+        },
+        {
+          label: 'Changes Requested Review',
+          value: 'changes requested review',
+        },
+        {
+          label: 'Reviewed by specific user',
+          value: 'reviewed by specific user',
+        },
+        {
+          label: 'Not reviewed to specific user',
+          value: 'not reviewed to specific user',
+        },
+        {
+          label: 'Awaiting review from specific user',
+          value: 'Awaiting review from specific user',
+        },
+        {
+          label: 'Awaiting review from specific user that someone has asked you directly to review',
+          value: 'Awaiting review from specific user that someone has asked you directly to review',
+        },
+      ],
+    },
+    {
+      if: {
+        field: 'reviewType',
+        operator: 'EQUAL',
+        value: 'reviewed by specific user',
+      },
+      type: 'group',
+      label: 'Review options',
+      subfields: [
+        {
+          field: 'reviewedByAccount',
+          type: 'github_user',
+          label: 'Reviewed by this account',
+        },
+      ],
+    },
+    {
+      if: {
+        field: 'reviewType',
+        operator: 'EQUAL',
+        value: 'not reviewed to specific user',
+      },
+      type: 'group',
+      label: 'Review options',
+      subfields: [
+        {
+          field: 'notReviewedByAccount',
+          type: 'github_user',
+          label: 'not Reviewed by this account',
+        },
+      ],
+    },
+    {
+      if: {
+        field: 'reviewType',
+        operator: 'EQUAL',
+        value: 'Awaiting review from specific user',
+      },
+      type: 'group',
+      label: 'Review options',
+      subfields: [
+        {
+          field: 'awaitingReviewFromAccount',
+          type: 'github_user',
+          label: 'Awaiting review from this account',
+        },
+      ],
+    },
+    {
+      if: {
+        field: 'reviewType',
+        operator: 'EQUAL',
+        value: 'Awaiting review from specific user that someone has asked you directly to review',
+      },
+      type: 'group',
+      label: 'Review options',
+      subfields: [
+        {
+          field: 'awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview',
+          type: 'github_user',
+          label: 'Awaiting review from this account that someone has asked you directly to review',
+        },
+      ],
+    },
+    {
+      field: 'CIStatus',
+      type: 'select',
+      label: 'CI/CD status of entries',
+      options: [
+        {
+          label: 'Any',
+          value: 'all',
+        },
+        {
+          label: 'Success',
+          value: 'success',
+        },
+        {
+          label: 'Failure',
+          value: 'failure',
+        },
+        {
+          label: 'Pending',
+          value: 'pending',
+        },
+      ],
+    },
+    {
       field: 'isArchived',
       type: 'select',
       label: 'Show Archived entries',
@@ -559,6 +769,13 @@ loadNewWidget('entries', getTrendingWidget, {
           value: false,
         },
       ],
+    },
+    {
+      field: 'labels',
+      type: 'text',
+      placeholder:
+        'Any label',
+      label: 'Entries with this label',
     },
     {
       field: 'visibilityType',

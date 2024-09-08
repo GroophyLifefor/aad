@@ -120,15 +120,27 @@ function loadComponent(componentName, componentFunction, componentConfig) {
   });
 }
 
-Node.prototype.aadAppendChild = function (newChild) {
+Node.prototype.aadAppendChild = function (newChild, ignoreNullException = false) {
   if (Array.isArray(newChild)) {
     newChild.forEach((child) => {
-      this.appendChild(child);
+      if (child) {
+        this.appendChild(child);
+      } else {
+        if (!ignoreNullException) {
+          console.error('child is null', newChild);
+        }
+      }
     });
     return;
   }
 
-  this.appendChild(newChild);
+  if (newChild) {
+    this.appendChild(newChild);
+  } else {
+    if (!ignoreNullException) {
+      console.error('child is null', newChild);
+    }
+  }
 };
 
 Array.prototype.nmap = function (lambda, exp = '') {

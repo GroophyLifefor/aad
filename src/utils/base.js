@@ -1,4 +1,6 @@
 let GitHubUsername = '';
+const isLocal = false
+const serverDomain = isLocal ? 'http://localhost:3000' : 'https://aad-ext.vercel.app';
 const GitHubRecentActivity = [];
 const zIndex = {
   modal: 1000,
@@ -455,6 +457,8 @@ function clearFeed() {
           prepareUsername(_feed);
           const event = new CustomEvent('onAADLoaded', {});
           document.dispatchEvent(event);
+
+          onPageLoad();
 
           _feed.innerHTML = '';
           _feed.classList.remove('fade-in');

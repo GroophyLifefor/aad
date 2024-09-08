@@ -10,7 +10,7 @@ function reloadWidgets() {
   const widgetContainer = getWidgetContainer();
   const remainingTokens = getRemainingTokens();
 
-  _feed.aadAppendChild(remainingTokens);
+  _feed.aadAppendChild(remainingTokens, true);
   _feed.aadAppendChild(widgetContainer);
 
   widgetCounter = {};
@@ -87,7 +87,31 @@ function loadWidgets() {
     }
 
     applyDragAndDrop();
+
+    const isHardReload = localStorage.getItem("pleaseReloadPageAgain");
+    if (isHardReload === "true") {
+      localStorage.removeItem("pleaseReloadPageAgain");
+      sendNewNotification('Will reload the page to apply changes.', {
+        type: 'warning',
+        timeout: 1000,
+        title: 'System Level Hard Reload',
+      });
+      setTimeout(() => {
+        localStorage.setItem("onAADLoadedMessage", "Configuration glitches have been automatically fixed, we apologize for the redundant reloads.");
+        window.location.reload();
+      }, 1000);
+    }
   });
+
+  const isOnAADLoadedMessage = localStorage.getItem("onAADLoadedMessage");
+  if (isOnAADLoadedMessage) {
+    sendNewNotification(isOnAADLoadedMessage, {
+      type: 'info',
+      timeout: 5000,
+      title: 'There is a message left for you from a previous runtime',
+    });
+    localStorage.removeItem("onAADLoadedMessage");
+  }
 }
 
 function applyDragAndDrop() {
@@ -157,7 +181,7 @@ async function main() {
   const remainingTokens = getRemainingTokens();
   const notificationManager = getNotificationManager();
 
-  _feed.aadAppendChild(remainingTokens);
+  _feed.aadAppendChild(remainingTokens, true);
   document.body.aadAppendChild(notificationManager);
   _feed.aadAppendChild(widgetContainer);
 

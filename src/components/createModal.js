@@ -53,6 +53,7 @@ function createModal(title, config, modalFactory) {
       bottom: '0px',
       left: '0px',
     },
+    border: undefined,
     maxWidth: '80dvw',
     maxHeight: '80dvh',
     cacheInfo: {
@@ -88,7 +89,8 @@ function createModal(title, config, modalFactory) {
         flex-direction: column;
         gap: 8px;
         background-color: ${getColor('modal.bg')};
-        border-radius: 4px;
+        border: 1px solid ${config.border || getColor('modal.border')}; 
+        border-radius: 8px;
         padding: ${config.padding};
         max-width: ${config.maxWidth};
         max-height: ${config.maxHeight};
@@ -209,7 +211,7 @@ function createModal(title, config, modalFactory) {
     closeModal: closeModal,
   });
 
-  refs.inner.appendChild(modal);
+  refs.inner.aadAppendChild(modal);
   refs.container.addEventListener('click', (e) => {
     if (e.target === refs.container && config?.close) {
       closeModal();
