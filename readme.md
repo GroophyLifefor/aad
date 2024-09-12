@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <a href="https://aad-ext.vercel.app/"><img src="https://aad-ext.vercel.app/_next/static/media/logo.e9ce608d.svg" alt="Markdownify" width="200"></a>
+  <a href="https://aad-ext.vercel.app/"><img src="images/logo.svg" alt="AAD" width="200"></a>
   <br>
   AAD - Highly Customizable GitHub
   <br>
@@ -29,7 +29,7 @@
        <tr align="center">
        </tr>
        <tr align="center">
-           <td style="border:none;vertical-align:middle;"><img src="orhun.png" width="90%" > </td>
+           <td style="border:none;vertical-align:middle;"><img src="images/orhun.png" width="90%" > </td>
           </tr>
      </table>
 </center>
@@ -47,7 +47,7 @@
        <tr align="center">
        </tr>
        <tr align="center">
-           <td style="border:none;vertical-align:middle;"><img src="image.png" width="90%" > </td>
+           <td style="border:none;vertical-align:middle;"><img src="images/image.png" width="90%" > </td>
           </tr>
      </table>
 </center>
@@ -59,7 +59,7 @@
        <tr align="center">
        </tr>
        <tr align="center">
-           <td style="border:none;vertical-align:middle;"><img src="image-1.png" width="90%" > </td>
+           <td style="border:none;vertical-align:middle;"><img src="images/image-1.png" width="90%" > </td>
           </tr>
      </table>
 </center>
@@ -81,7 +81,7 @@ Go to the [AAD Web Store](https://chromewebstore.google.com/detail/aad-highly-cu
        <tr align="center">
        </tr>
        <tr align="center">
-           <td style="border:none;vertical-align:middle;"><img src="image-2.png" width="90%" > </td>
+           <td style="border:none;vertical-align:middle;"><img src="images/image-2.png" width="90%" > </td>
           </tr>
      </table>
 </center>
