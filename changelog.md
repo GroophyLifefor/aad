@@ -73,3 +73,7 @@ the number of users)
 - In the trending widget, now you can change initial render count in settings.
 - New term added as quick look, like right now you can quick look to GitHub notifications with clicking the notification icon.
 - Trending widget a little bit improved in UI so know not has a horizontal scrollbar and easier to customize.
+
+## 1.2.3
+
+- Quick look GitHub notifications crash fixed when empty notifications.

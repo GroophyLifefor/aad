@@ -26,6 +26,11 @@ function initQuickLookOfGitHubNotifications() {
       prefix: prefix('modal-github-notifications-preview'),
       onLoaded: (dom) => {
         close();
+
+        if (!dom) {
+          return;
+        }
+
         const header = dom.querySelector('.Box-header');
         if (header) {
           header.innerHTML =

@@ -1,4 +1,10 @@
-const validFetchHosts = ['api.github.com', 'github.com', 'http://localhost:3000', 'aad-ext.vercel.app'];
+const validFetchHosts = [
+  'api.github.com',
+  'github.com',
+  'http://localhost:3000',
+  'aad-ext.vercel.app',
+  '*', // Allow all requests in waitlist timeline
+];
 
 function parseUrl(url) {
   var l = document.createElement('a');
@@ -11,13 +17,17 @@ function parseUrl(url) {
 }
 
 const aad_fetch = async (url, config) => {
-  const isValidHost = validFetchHosts.some((host) => url.includes(host));
+  const isValidHost = validFetchHosts.some(
+    (host) => url.includes(host) || host === '*'
+  );
   let status = isValidHost ? 'approved' : 'waiting';
 
   if (!isValidHost) {
     const userResponse = new Promise((resolve) => {
       sendNewNotification(
-        `Network Layer detected a request to <strong style="font-size: 16px;color: ${getColor('globalLinkColor')}">${url}</strong>, but it's not allowed, do you want to still proceed?`,
+        `Network Layer detected a request to <strong style="font-size: 16px;color: ${getColor(
+          'globalLinkColor'
+        )}">${url}</strong>, but it's not allowed, do you want to still proceed?`,
         {
           type: 'warning',
           timeout: 8000,
@@ -49,4 +59,3 @@ const aad_fetch = async (url, config) => {
 
   return fetch(url, config);
 };
-
