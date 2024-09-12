@@ -110,7 +110,7 @@ This software uses the following open source packages:
 - [Heroicons](https://heroicons.com/)
 - [React Icons](https://react-icons.github.io/react-icons/)
 
-#### Back-end (node)
+#### Back-end (nodejs)
 
 - [Next.js API](https://nextjs.org/)
 - [Node.js](https://nodejs.org/)
