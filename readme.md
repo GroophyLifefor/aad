@@ -11,7 +11,7 @@
 </h6>
 
 <p align="center">
-  <a href="https://chromewebstore.google.com/detail/aad-highly-customizable-g/mgcjpifcmjkabdlpgbiahcdhknjjdmff">
+  <a target="_blank" href="https://chromewebstore.google.com/detail/aad-highly-customizable-g/mgcjpifcmjkabdlpgbiahcdhknjjdmff">
     <img src="https://img.shields.io/badge/download-Web_Store-blue"
          alt="Gitter">
   </a>
