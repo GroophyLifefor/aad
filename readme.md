@@ -110,13 +110,15 @@ This software uses the following open source packages:
 - [Heroicons](https://heroicons.com/)
 - [React Icons](https://react-icons.github.io/react-icons/)
 
-#### Back-end
+#### Back-end (node)
 
 - [Next.js API](https://nextjs.org/)
 - [Node.js](https://nodejs.org/)
 - [MongoDB](https://www.mongodb.com/)
 
 `Cost: 0$/Month`
+
+#### Back-end (go)
 
 > **Note:** Also one more back-end which for cron jobs
 
