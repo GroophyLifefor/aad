@@ -77,3 +77,4 @@ the number of users)
 ## 1.2.3
 
 - Quick look GitHub notifications crash fixed when empty notifications.
+- Metrics changed to false by default.

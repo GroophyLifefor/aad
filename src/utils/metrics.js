@@ -1,4 +1,4 @@
-let isMetricsEnabled = true;
+let isMetricsEnabled = false;
 
 function disableMetrics() {
   isMetricsEnabled = false;
@@ -22,8 +22,11 @@ function loadMetricsStatus() {
   chrome.storage.local.get(['isMetricsEnabled'], (items) => {
     if (items.isMetricsEnabled === false) {
       disableMetrics();
-    } else {
+    } else if (items.isMetricsEnabled === true) {
       enableMetrics();
+    } else {
+      // Disable metrics by default
+      disableMetrics();
     }
   });
 }

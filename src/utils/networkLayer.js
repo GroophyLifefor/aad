@@ -3,7 +3,6 @@ const validFetchHosts = [
   'github.com',
   'http://localhost:3000',
   'aad-ext.vercel.app',
-  '*', // Allow all requests in waitlist timeline
 ];
 
 function parseUrl(url) {
