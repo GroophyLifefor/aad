@@ -16,6 +16,14 @@ async function APIRequest(url, options = {}) {
   };
 
   const pat = await getPatFromStorage();
+
+  if (pat === 'deny-all') {
+    return {
+      status: 403,
+      json: () => ({ status: 403, data: 'Access denied.' }),
+    }; 
+  }
+
   const isValidToken = await checkIsValidToken(pat);
 
   options.headers = {
@@ -72,7 +80,6 @@ function getPatFromStorageCB(callback) {
     }
   });
 }
-
 
 function setPatToStorage(pat) {
   return new Promise((resolve, reject) => {

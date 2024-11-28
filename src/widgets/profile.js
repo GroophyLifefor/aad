@@ -66,7 +66,7 @@ function getProfileWidget(uuid) {
             <div class="${prefix}-inner-namevbio">
               <h3>
                 <span class="no-underline no-wrap aad-custom-smoothie-color-transition">
-                  ${data.name || data.login}
+                  ${data.name || data.login || 'No name provided'}
                 </span>
               </h3>
               <p>${data.bio || `
@@ -78,12 +78,12 @@ function getProfileWidget(uuid) {
             <div class="${prefix}-inner-population">
               <a ref="followers" class="Link--secondary aad-custom-smoothie-color-transition no-underline no-wrap">
                 ${SVG.friends}
-                <span class="text-bold color-fg-default">${data.followers}</span>
+                <span class="text-bold color-fg-default">${data.followers || 0}</span>
                 followers
               </a>
               · 
               <a ref="following"< class="Link--secondary aad-custom-smoothie-color-transition no-underline no-wrap">
-                <span class="text-bold color-fg-default">${data.following}</span>
+                <span class="text-bold color-fg-default">${data.following || 0}</span>
                 following
               </a>        
             </div>

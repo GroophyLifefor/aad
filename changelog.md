@@ -78,3 +78,12 @@ the number of users)
 
 - Quick look GitHub notifications crash fixed when empty notifications.
 - Metrics changed to false by default.
+
+## 1.2.4
+
+- Entries label fixed and now supports multiple labels and space included labels.
+- New settings option for who don't want anyway use PAT token.
+- Profile widget now handle with no token with saying "not provided"
+- New quick look GitHub Repositories added, to see your repositories quickly. You can open by classic way to move profile page, open sidebar, click "Your repositories" button.
+
+## 1.2.5

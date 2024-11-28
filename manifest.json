@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AAD - Highly Customizable GitHub",
-  "version": "1.2.3",
+  "version": "1.2.5",
   "description": "GitHub interface supporter for lazy developers",
   "permissions": ["storage", "unlimitedStorage"],
   "browser_specific_settings": {
@@ -72,6 +72,7 @@
         "src/components/notificationManager.js",
         "src/components/drawer.js",
         "src/components/quickLook_GitHubNotifications.js",
+        "src/components/quickLook_GitHubRepositories.js",
 
         "src/widgets/profile.js",
         "src/widgets/recentActivity.js",

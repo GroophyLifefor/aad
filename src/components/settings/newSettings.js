@@ -207,8 +207,12 @@ function getNewSettings() {
 
     .${prefix('personalAccessTokenContainer')} {
       display: flex;
+      flex-direction: column;
       gap: 12px;
-      flex-wrap: wrap;
+      }
+
+      .${prefix('savePATButton')} {
+        width: fit-content;
       }
     `);
 
@@ -981,7 +985,16 @@ function getNewSettings() {
                     <dd class="user-profile-bio-field-container js-length-limited-input-container">
                       <div class="${prefix('personalAccessTokenContainer')}">
                         <input ref="patinput" class="form-control" type="password" placeholder="Put your token here(optional)" >
-                        <button ref="savePAT" data-target="waiting-form.submit" data-action="click:waiting-form#submitPolitely" type="submit" data-view-component="true" class="Button--primary Button--medium Button">  <span class="Button-content">
+                        <div class="form-checkbox aad-m-0-hard">
+                          <label >
+                            Don't allow API requests by using PAT.
+                          </label>
+                          <input type="checkbox" ref="dontUsePATCheckbox" >
+                          <p class="note">
+                            It not recommended to use this option unless you know what you are doing.
+                          </p>
+                        </div>
+                        <button ref="savePAT" data-target="waiting-form.submit" data-action="click:waiting-form#submitPolitely" type="submit" data-view-component="true" class="Button--primary Button--medium Button ${prefix('savePATButton')}">  
                           <span class="Button-label">Save Personal Access Token</span>
                           </span>
                         </button>
@@ -1086,9 +1099,26 @@ function getNewSettings() {
   });
 
   let pat = '';
+  
   getPatFromStorageCB((_pat) => {
     pat = _pat;
     refs.patinput.value = pat;
+    if (pat === 'deny-all') {
+      refs.dontUsePATCheckbox.checked = true;
+      refs.patinput.disabled = true;
+    }
+
+    refs.dontUsePATCheckbox.addEventListener('change', (e) => {
+      if (refs.dontUsePATCheckbox.checked) {
+        refs.patinput.disabled = true;
+        pat = 'deny-all';
+        refs.patinput.value = 'deny-all'
+      } else {
+        refs.patinput.disabled = false;
+        pat = '';
+        refs.patinput.value = '';
+      }
+    });
 
     // when focus, show the full pat
     refs.patinput.addEventListener('focus', (e) => {

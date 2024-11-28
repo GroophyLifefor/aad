@@ -3,9 +3,9 @@ function initQuickLookOfGitHubNotifications() {
     'AppHeader-notifications-button'
   );
   if (!notificationsButton) {
-    console.warn(
-      'Notifications button not found <-- initQuickLookOfGitHubNotifications()'
-    );
+    // console.warn(
+    //   'Notifications button not found <-- initQuickLookOfGitHubNotifications()'
+    // );
     return;
   }
 

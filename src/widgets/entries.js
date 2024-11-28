@@ -12,7 +12,7 @@ function getTrendingWidget(uuid) {
     // Array | 'no-label'
     // OR SYNTAX: label:"bug","wip"
     // AND SYNTAX: label:"bug" label:"wip"
-    // For now only one label is supported, empty string means no query
+    // use space-separated for multiple, empty string means no query
     labels: '',
     assignee: GitHubUsername,
     // 'all' | 'success' | 'failure' | 'pending'
@@ -33,7 +33,8 @@ function getTrendingWidget(uuid) {
     reviewedByAccount: GitHubUsername,
     notReviewedByAccount: GitHubUsername,
     awaitingReviewFromAccount: GitHubUsername,
-    awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview: GitHubUsername,
+    awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview:
+      GitHubUsername,
   };
 
   const widgetData = getWidgetByUUID(uuid);
@@ -51,7 +52,10 @@ function getTrendingWidget(uuid) {
     onConfigChanged: () => {
       const widgetData = getWidgetByUUID(uuid);
       Object.keys(defaultConfig).forEach((key) => {
-        config[key] = widgetData.config.public[key] === '' ? '' : widgetData.config.public[key] || defaultConfig[key];
+        config[key] =
+          widgetData.config.public[key] === ''
+            ? ''
+            : widgetData.config.public[key] || defaultConfig[key];
       });
       headerTitle =
         widgetData.config.public.headerTitle || 'AAD - Entries [Issues & PRs]';
@@ -69,7 +73,10 @@ function getTrendingWidget(uuid) {
   let entries = [];
 
   Object.keys(defaultConfig).forEach((key) => {
-    config[key] = widgetData.config.public[key] === '' ? '' : widgetData.config.public[key] || defaultConfig[key];
+    config[key] =
+      widgetData.config.public[key] === ''
+        ? ''
+        : widgetData.config.public[key] || defaultConfig[key];
   });
 
   config.headerTitle = headerTitle;
@@ -141,9 +148,23 @@ function getTrendingWidget(uuid) {
       if ((labels || '').trim() === '') {
         return '';
       } else {
-        return `label:${labels}`;
+        let final = '';
+        const labelList = labels.split(' ');
+        let temp = '';
+        labelList.forEach((label) => {
+          if (label.startsWith('"')) {
+            temp = label.substring(1, label.length) + ' ';
+          } else if (label.endsWith('"')) {
+            temp += label.substring(0, label.length - 1);
+            final += ` label:"${temp}"`;
+            temp = '';
+          } else {
+            final += ` label:${label}`;
+          }
+        });
+        return final;
       }
-    }
+    };
 
     const assigneeConfig = () => {
       if ((assignee || '').trim() === '') {
@@ -151,7 +172,7 @@ function getTrendingWidget(uuid) {
       } else {
         return `assignee:${assignee}`;
       }
-    }
+    };
 
     const CIStatusConfig = {
       all: '',
@@ -424,27 +445,31 @@ function getTrendingWidget(uuid) {
     const FREAKING_MAGIC_NUMBER = 660;
     let state = 'none';
     let resizeTimeout;
-  
+
     const handleResize = () => {
       const width = refs.container.offsetWidth;
-  
+
       if (width < FREAKING_MAGIC_NUMBER && state !== 'hide') {
         state = 'hide';
-        refs.container.querySelectorAll('.issue-meta-section').forEach((entry) => {
-          const actualElement = entry.parentElement;
-          actualElement.classList.remove(prefix('show'));
-          actualElement.classList.add(prefix('hide'));
-        });
+        refs.container
+          .querySelectorAll('.issue-meta-section')
+          .forEach((entry) => {
+            const actualElement = entry.parentElement;
+            actualElement.classList.remove(prefix('show'));
+            actualElement.classList.add(prefix('hide'));
+          });
       } else if (width >= FREAKING_MAGIC_NUMBER && state !== 'show') {
         state = 'show';
-        refs.container.querySelectorAll('.issue-meta-section').forEach((entry) => {
-          const actualElement = entry.parentElement;
-          actualElement.classList.remove(prefix('hide'));
-          actualElement.classList.add(prefix('show'));
-        });
+        refs.container
+          .querySelectorAll('.issue-meta-section')
+          .forEach((entry) => {
+            const actualElement = entry.parentElement;
+            actualElement.classList.remove(prefix('hide'));
+            actualElement.classList.add(prefix('show'));
+          });
       }
     };
-  
+
     new ResizeObserver(() => {
       if (resizeTimeout) clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(handleResize, 100);
@@ -663,8 +688,10 @@ loadNewWidget('entries', getTrendingWidget, {
           value: 'Awaiting review from specific user',
         },
         {
-          label: 'Awaiting review from specific user that someone has asked you directly to review',
-          value: 'Awaiting review from specific user that someone has asked you directly to review',
+          label:
+            'Awaiting review from specific user that someone has asked you directly to review',
+          value:
+            'Awaiting review from specific user that someone has asked you directly to review',
         },
       ],
     },
@@ -720,15 +747,18 @@ loadNewWidget('entries', getTrendingWidget, {
       if: {
         field: 'reviewType',
         operator: 'EQUAL',
-        value: 'Awaiting review from specific user that someone has asked you directly to review',
+        value:
+          'Awaiting review from specific user that someone has asked you directly to review',
       },
       type: 'group',
       label: 'Review options',
       subfields: [
         {
-          field: 'awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview',
+          field:
+            'awaitingReviewFromAccountThatSomeoneHasAskedYouDirectlyToReview',
           type: 'github_user',
-          label: 'Awaiting review from this account that someone has asked you directly to review',
+          label:
+            'Awaiting review from this account that someone has asked you directly to review',
         },
       ],
     },
@@ -773,9 +803,9 @@ loadNewWidget('entries', getTrendingWidget, {
     {
       field: 'labels',
       type: 'text',
-      placeholder:
-        'Any label',
-      label: 'Entries with this label',
+      placeholder: 'Any label',
+      label:
+        'Entries with this label (use spaces between labels to include multiple)',
     },
     {
       field: 'visibilityType',

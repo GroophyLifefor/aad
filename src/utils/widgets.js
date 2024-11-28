@@ -30,7 +30,7 @@ const addingWidgets = [
     name: 'Entries',
     validName: 'entries',
     image:
-      'https://pspdfkit.com/assets/images/blog/2021/how-to-handle-stacked-pull-requests-on-github/article-header-4d509162.png',
+      'https://aad-ext.vercel.app/widgets/entries.png',
     description:
       "If you're too busy with work, this is for you, freely manage and track issues and pull-requests.",
   },
