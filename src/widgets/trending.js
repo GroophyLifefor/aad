@@ -322,6 +322,26 @@ function getTrendingWidget(uuid) {
                 skeleton.outerHTML = 'Cannot loaded data';
               });
 
+              function removeBuggyPart(i) {
+                const nodes = Array.from(
+                  dom.querySelectorAll('.blankslate-container')
+                );
+                if (!nodes) return false;
+                nodes?.forEach((node) => {
+                  node.parentElement.removeChild(node);
+                });
+                return true;
+              }
+
+              async function tryRemoveBuggyPart() {
+                for (let i = 0; i < 30; i++) {
+                  if (removeBuggyPart(i)) return;
+                  await new Promise((resolve) => setTimeout(resolve, 100));
+                }
+              }
+
+              tryRemoveBuggyPart();
+
               if (config.freeRedirect === true) {
                 const links = dom?.querySelectorAll('a') || [];
                 links.forEach((link) => {

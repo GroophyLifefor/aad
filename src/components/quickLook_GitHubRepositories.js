@@ -56,6 +56,11 @@ function initQuickLookOfGitHubRepositories() {
         if (!dom) {
           return;
         }
+
+        dom.querySelectorAll('.starring-container').forEach((el) => {
+          const buggyVerticalBar = el.nextElementSibling;
+          buggyVerticalBar?.remove();
+        });
       },
     });
   });

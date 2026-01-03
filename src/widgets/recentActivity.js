@@ -1,243 +1,377 @@
 function getRecentActivityWidget(uuid) {
-  function createCard(prefix, data, activity) {
-    if (data.message === 'Not Found') {
-      return null;
+  const defaultConfig = {
+    initialRenderCount: 3,
+  };
+
+  const widgetData = getWidgetByUUID(uuid);
+  let config = {};
+
+  Object.keys(defaultConfig).forEach((key) => {
+    config[key] =
+      widgetData.config.public[key] === ''
+        ? ''
+        : widgetData.config.public[key] || defaultConfig[key];
+  });
+
+  let renderCount = config.initialRenderCount;
+
+  const { widget, inner } = createWidget(CONST_IWillAddLater, {
+    title: 'Recent Activity',
+    type: 'recentActivity',
+    widgetId: uuid,
+    onConfigChanged: () => {
+      const widgetData = getWidgetByUUID(uuid);
+      Object.keys(defaultConfig).forEach((key) => {
+        config[key] =
+          widgetData.config.public[key] === ''
+            ? ''
+            : widgetData.config.public[key] || defaultConfig[key];
+      });
+      renderCount = config.initialRenderCount;
+      execute(renderCount);
+    },
+  });
+
+  // init cache
+  setConfigByUUID(uuid, { public: config });
+
+  const prefix = prefixer('recentActivity', uuid, 'widget');
+  let refs = {};
+
+  const staticUrl =
+    'https://github.com/issues/recent?q=is%3Apr%20is%3Aissue%20involves%3A%40me%20updated%3A%3E%40today-1w%20sort%3Aupdated-desc';
+
+  function startLoadingScreen() {
+    refs.container.innerHTML = `<div class="${prefix(
+      'loader-container'
+    )}"><div class="${prefix('loader')}"></div></div>`;
+  }
+
+  function endLoadingScreen() {
+    refs.container.innerHTML = '';
+  }
+
+  function buildTemplate() {
+    addCustomCSS(`
+      .Box-row--focus-gray.navigation-focus {
+        background-color: transparent !important;
+      }
+
+      .${prefix('container')} {
+        overflow-x: auto;
+      }
+  
+      .${prefix('width-mobile')} {
+        width: fit-content;
+      }
+  
+      .${prefix('width-desktop')} {
+        width: max-content;
+        width: -webkit-fill-available;
+      }
+  
+      .${prefix('loader-container')} {
+        width: 100%;
+        height: 240px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+  
+      .${prefix('loader')} {
+        width: 70px;
+        height: 50px;
+        box-sizing: border-box;
+        background:
+          conic-gradient(from 135deg at top,#0000, #fff 1deg 90deg,#0000 91deg) right -20px bottom 8px/18px 9px,
+          linear-gradient(#fff 0 0) bottom/100% 8px,
+          #000;
+        background-repeat: no-repeat;
+        border-bottom: 8px solid #000;
+        position: relative;
+        animation: ${prefix('l7-0')} 2s infinite linear;
+      }
+      .${prefix('loader')}::before {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 14px;
+        background: lightblue;
+        left: 10px;
+        animation: ${prefix('l7-1')} 2s infinite cubic-bezier(0,200,1,200);
+      }
+      @keyframes ${prefix('l7-0')}{
+        100% { background-position: left -20px bottom 8px,bottom}
+      }
+      @keyframes ${prefix('l7-1')}{
+        0%,50%   {bottom: 8px}
+        90%,100% {bottom: 8.1px}
+      }
+      `);
+
+    const isExist = document.querySelector(`.${prefix('container')}`);
+    if (!!isExist) {
+      isExist.remove();
     }
 
-    addCustomCSS(`
-      .${prefix}-card {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding: 8px;
-        border-radius: 8px;
-        border: 1px solid ${getColor('recentActivity.item-border')};
-      }
-
-      .${prefix}-card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .${prefix}-card-top-left {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding-right: 16px;
-      }
-
-      .${prefix}-card-title {
-        display: flex;
-        gap: 4px;
-        cursor: pointer;
-      }
-
-      .${prefix}-card-top-left > div > span {
-        font-weight: 400;
-        font-size: 0.75rem;
-        line-height: 1rem;
-        opacity: 0.8;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 1;
-        transition: opacity 0.3s ease;
-      }
-
-      .${prefix}-card-top-left > div > span:hover {
-        text-decoration: underline;
-        opacity: 1;
-      }
-
-      .${prefix}-card-body > span {
-        font-size: 0.75rem;
-        line-height: 1rem;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 3;
-      }
-
-      .${prefix}-card-avatar {
-        border-radius: 50%;
-      }
-    `);
-
-    const refs = {};
-    const card = render(
+    refs = {};
+    const html = render(
       refs,
       `
-      <div class="${prefix}-card">
-        <div class="${prefix}-card-top">
-          <div class="${prefix}-card-top-left">
-            ${activity.type === 'pull-request' ? SVG.prGreen(20, 20) : ''}
-            ${activity.type === 'issue' ? SVG.issueGreen(20, 20) : ''}
-            <div class="${prefix}-card-title" ref="title">
-              <span>${data.title}</span>
-              <span>#${data.number}</span>
-            </div>
-          </div>
-          <img src="${
-            data.user.avatar_url
-          }" class="${prefix}-card-avatar" width="20px" height="20px" alt="card owner avatar" />
+        <div ref="container" class="${prefix('container')} aad-scroll-x">
         </div>
-        <div class="${prefix}-card-body">
-          ${
-            data.body
-              ? `<span>${data.body}</span>`
-              : `<span style="color: #778491;">This ${activity.type} does not have a description.</span>`
-          }
-        </div>
-      </div>
-      `
+        `
     );
+    inner.aadAppendChild(html);
+  }
 
-    refs.title.addEventListener('click', () => {
-      const url = data.html_url;
+  function applyJS(renderCount) {
+    startLoadingScreen();
+    checkRecentActivity(renderCount);
+  }
+
+  function checkRecentActivity(renderCount) {
+    aad_fetch(staticUrl, {
+      redirect: 'follow',
+    })
+      .then((response) => {
+        return response.text();
+      })
+      .then((html) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        addCustomCSS(`
+          .${prefix('hide')} {
+            display: none;
+          }
+            
+          .${prefix('show')} {
+            display: flex-inline;
+          }`);
+
+        doc.querySelectorAll('[rel="stylesheet"]').forEach((style) => {
+          document.head.appendChild(style);
+        });
+
+        endLoadingScreen();
+
+        const _list = Array.from(doc.querySelectorAll('*')).filter((item) =>
+          item
+            .getAttribute('aria-labelledby')
+            ?.includes('list-view-container-title')
+        );
+        const listElement = _list?.[0] || null;
+        const list = listElement?.cloneNode(true) || null;
+        // Convert to array to avoid live collection issues when appending
+        const childs = Array.from(listElement?.children || []);
+        
+        if (!!list) list.innerHTML = '';
+
+        for (let i = 0; i < renderCount; i++) {
+          if (!childs[i]) break;
+          // Clone the node before appending to avoid moving from original parent
+          list.appendChild(childs[i].cloneNode(true));
+        }
+
+        refs.container.innerHTML = '';
+
+        const loadMoreButtonRefs = {};
+        const loadMoreButton = render(
+          loadMoreButtonRefs,
+          `<button ref="button" type="submit" class="ajax-pagination-btn btn color-border-default f6 mt-2 width-full" data-disable-with="Loading more…">
+            Load more…
+          </button>`
+        );
+        loadMoreButtonRefs.button.addEventListener('click', () => {
+          execute(renderCount * 2);
+        });
+
+        addCustomCSS(`
+          .${prefix('vertical')} {
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: start;
+            flex-direction: column;
+          }
+      
+          .${prefix('horizontal')} {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+      
+          .${prefix('green-ball')} {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #1f893e;
+          }
+        `);
+
+      
+
+        addCustomCSS(`
+          .${prefix('not-found-text')} {
+            border-bottom: 1px solid #1f893e;
+          }
+        `);
+
+        const notFound = render(
+          null,
+          `<div class="aad-w-full aad-center" ref="notFound">
+            <span class="${prefix(
+            'not-found-text'
+          )}">No recent activity found</span>
+          </div>`
+        );
+
+        if (!!list) {
+          refs.container.appendChild(list);
+          refs.container.aadAppendChild(loadMoreButton);
+        } else {
+          refs.container.appendChild(notFound);
+        }
+
+        makeDetailsDynamicResponsive();
+        listenEntryClicks();
+      })
+      .catch((error) => {
+        endLoadingScreen();
+        inner.innerHTML = `
+        <div class="aad-w-full aad-center">
+          <span>${error}<span>
+        </div>
+        `;
+      });
+  }
+
+  function makeDetailsDynamicResponsive() {
+    const FREAKING_MAGIC_NUMBER = 660;
+    let state = 'none';
+    let resizeTimeout;
+
+    const handleResize = () => {
+      const width = refs.container.offsetWidth;
+
+      if (width < FREAKING_MAGIC_NUMBER && state !== 'hide') {
+        state = 'hide';
+        refs.container
+          .querySelectorAll('.issue-meta-section')
+          .forEach((entry) => {
+            const actualElement = entry.parentElement;
+            actualElement.classList.remove(prefix('show'));
+            actualElement.classList.add(prefix('hide'));
+          });
+      } else if (width >= FREAKING_MAGIC_NUMBER && state !== 'show') {
+        state = 'show';
+        refs.container
+          .querySelectorAll('.issue-meta-section')
+          .forEach((entry) => {
+            const actualElement = entry.parentElement;
+            actualElement.classList.remove(prefix('hide'));
+            actualElement.classList.add(prefix('show'));
+          });
+      }
+    };
+
+    new ResizeObserver(() => {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(handleResize, 100);
+    }).observe(refs.container);
+  }
+
+  function listenEntryClicks() {
+    const loadRepositoryPreview = (url) => {
       const { close } = aad_loading(uuid);
       createFrameModal({
-        title: 'Preview',
+        title: 'Repository Preview',
         url: url,
-        selector: (doc) => doc.querySelector('.js-quote-selection-container'),
-        prefix: prefix + '-modal-preview',
-        //onLoad: aad_sleep(5000),
+        selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
+        prefix: prefix('modal-repository-preview'),
         onLoaded: () => {
           close();
         },
       });
-    });
+    };
 
-    const arr = ['pull_request', 'issue', 'issue', 'test'];
-    const uniques = [];
-    arr.forEach((item) => {
-      if (!uniques.includes(item)) uniques.push(item);
-    });
+    const links = refs.container.querySelectorAll('a');
+    links.forEach((link) => {
+      link.addEventListener(
+        'click',
+        (e) => {
+          e.preventDefault();
+          let href = link.getAttribute('href')?.trim();
+          if (href.includes('http')) {
+            href = href.substring(18);
+          }
+          const splitted = href.split('/');
 
-    return card;
+          if (splitted[3] === 'issues') {
+            const url = 'https://github.com' + href;
+            const { close } = aad_loading(uuid);
+            createFrameModal({
+              title: 'Preview',
+              url: url,
+              selector: (doc) =>
+                doc.querySelector('.js-quote-selection-container'),
+              prefix: prefix('modal-repository-preview'),
+              onLoaded: () => {
+                close();
+              },
+            });
+          } else {
+            // check is repository
+            APIRequest(
+              'https://api.github.com/repos/' + splitted[1] + '/' + splitted[2]
+            ).then((res) => {
+              if (res.status === 200) {
+                loadRepositoryPreview('https://github.com' + href);
+              } else {
+                // check is user
+                APIRequest('https://api.github.com/users/' + splitted[1]).then(
+                  (res) => {
+                    if (res.status === 200) {
+                      loadUserPreview('https://github.com' + href);
+                    } else {
+                      sendNewNotification('Unvalid action', {
+                        type: 'error',
+                        timeout: 3000,
+                      });
+                    }
+                  }
+                );
+              }
+            });
+          }
+        },
+        { passive: false }
+      );
+    });
   }
 
-  const widgetId = uuid;
-  const { widget, inner, getTitle, updateTitle } = createWidget(
-    null /* Means I'll add a node later */,
-    {
-      title: 'Recent Activity',
-      type: 'recentActivity',
-      widgetId,
-    }
-  );
+  function execute(renderCount = 3) {
+    buildTemplate();
+    applyJS(renderCount);
+  }
 
-  const prefix = 'aad-custom-widget-recent-activity';
-
-  addCustomCSS(`
-    .${prefix}-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      border-radius: 8px;
-    }
-  `);
-
-  const refs = {};
-  const recentActivityList = render(
-    refs,
-    `
-    <div class="${prefix}-list" ref="list">
-    </div>
-    `
-  );
-  const list = refs.list;
-  inner.aadAppendChild(recentActivityList);
-
-  addCustomCSS(`
-    .${prefix}-vertical {
-      padding: 8px;
-      display: flex;
-      gap: 8px;
-      align-items: start;
-      flex-direction: column;
-    }
-
-    .${prefix}-horizontal {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .${prefix}-green-ball {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background-color: #1f893e;
-    }
-
-    .${prefix}-header-title {
-      font-size: 0.75rem;
-      line-height: 1rem;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
-      font-weight: 600;
-    }
-
-    .${prefix}-header-desc {
-      font-size: 0.75rem;
-      line-height: 1rem;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
-      opacity: 0.6;
-    }
-  `);
-
-  const headerRefs = {};
-  const header = render(
-    headerRefs,
-    `<div class="${prefix}-vertical" ref="header">
-      <div class="${prefix}-horizontal">
-        <div class="${prefix}-green-ball"></div>
-        <span class="${prefix}-header-title">My work</span>
-      </div>
-      <span class="${prefix}-header-desc">Life doesn’t require that we be the best, only that we try our best.</span>
-    </div>`
-  );
-
-  list.aadAppendChild(header);
-
-  (async () => {
-    const title = getTitle();
-    const tempGitHubRecentActivity = [...GitHubRecentActivity];
-    updateTitle(`${title} - 0/${tempGitHubRecentActivity.length}`);
-
-    for (let i = 0; i < tempGitHubRecentActivity.length; i++) {
-      const activity = tempGitHubRecentActivity[i];
-
-      let url = '';
-      if (activity.type === 'pull-request') {
-        url = `https://api.github.com/repos/${activity.owner}/${activity.repo}/pulls/${activity.number}`;
-      } else if (activity.type === 'issue') {
-        url = `https://api.github.com/repos/${activity.owner}/${activity.repo}/issues/${activity.number}`;
-      }
-
-      await APIRequest(url)
-        .then((res) => res.json())
-        .then((data) => {
-          const card = createCard(prefix, data, activity);
-          if (card) {
-            list.aadAppendChild(card);
-            updateTitle(`${title} - ${i+1}/${tempGitHubRecentActivity.length}`);
-          }
-        });
-    }
-    setTimeout(() => {
-      updateTitle(title)
-    }, 500);
-  })();
-
-  return { widget };
+  execute(renderCount);
+  return {
+    widget,
+  };
 }
 
-loadNewWidget('recentActivity', getRecentActivityWidget);
+loadNewWidget('recentActivity', getRecentActivityWidget, {
+  properties: [
+    {
+      field: 'initialRenderCount',
+      type: 'number',
+      placeholder: '3',
+      label: 'Initial render count of entries',
+      min: 1,
+      max: 20,
+    },
+  ],
+});

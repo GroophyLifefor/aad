@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <a href="https://aad-ext.vercel.app/"><img src="images/logo.svg" alt="AAD" width="200"></a>
+  <a href="https://aad.yelix.cloud/"><img src="images/logo.svg" alt="AAD" width="200"></a>
   <br>
   AAD - Highly Customizable GitHub
   <br>

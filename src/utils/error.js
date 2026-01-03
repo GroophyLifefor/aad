@@ -129,7 +129,7 @@ function fireError(message, data) {
             action: () => {
               (async () => {
                 aad_fetch(
-                  'https://aad-ext.vercel.app/api/reportDetailedException',
+                  'https://aad.yelix.cloud/api/reportDetailedException',
                   {
                     method: 'POST',
                     mode: 'no-cors',

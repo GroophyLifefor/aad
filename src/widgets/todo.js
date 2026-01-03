@@ -6,6 +6,7 @@ function getTodoWidget(uuid) {
   });
   const prefix = prefixer('todo', uuid, 'widget');
   let refs = {};
+  let isApplyingJS = false;
 
   // Start Widget Data
   const widgetData = getWidgetByUUID(uuid);
@@ -29,6 +30,14 @@ function getTodoWidget(uuid) {
     const b = parseInt(hexcolor.substr(4, 2), 16);
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
     return yiq >= 128 ? 'black' : 'white';
+  }
+
+  function convertUrlsToLinks(text) {
+    if (!text) return text;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(urlRegex, (url) => {
+      return `<a href="${url}" target="_blank" class="${prefix('description-link')}">${url}</a>`;
+    });
   }
 
   function buildTemplate() {
@@ -106,7 +115,7 @@ function getTodoWidget(uuid) {
     left: 0;
     -webkit-filter: url("#goo-12");
     filter: url("#goo-12");
-    transform: trasnlate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
     pointer-events: none;
   }
   .checkbox-wrapper-12 .cbx svg {
@@ -212,6 +221,16 @@ function getTodoWidget(uuid) {
         font-weight: 400;
         color: #778491CC;
     }
+
+      .${prefix('description-link')} {
+        color: ${getColor('globalLinkColor') || '#58a6ff'};
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .${prefix('description-link')}:hover {
+        text-decoration: underline;
+      }
 
       .${prefix('badges')} {
         display: flex;
@@ -368,13 +387,14 @@ function getTodoWidget(uuid) {
       
       `);
 
-    const checkbox = (isChecked) => {
+    const checkbox = (isChecked, todoUuid) => {
+      const checkboxId = `cbx-${todoUuid}`;
       return `<div class="checkbox-wrapper-12">
                   <div class="cbx">
-                    <input id="cbx-12" type="checkbox" ${
+                    <input id="${checkboxId}" type="checkbox" ${
                       isChecked ? 'checked' : ''
                     }/>
-                    <label for="cbx-12"></label>
+                    <label for="${checkboxId}"></label>
                     <svg width="15" height="14" viewbox="0 0 15 14" fill="none">
                       <path d="M2 8.36364L6.23077 12L13 2"></path>
                     </svg>
@@ -399,17 +419,17 @@ function getTodoWidget(uuid) {
           <div ref="refresh" class="${prefix('refresh-container')}">
             ${SVG.refresh('20px', '20px')}
           </div>
-          <div class="${prefix('container')}">
+          <div ref="container" class="${prefix('container')}">
             ${todos
               .map((todo, index) => {
                 if (todo.isCompleted) return '';
 
                 let dateObject = new Date(todo.endDate);
                 let currentDate = new Date();
-                let farAsDays = Math.floor(
+                let farAsDays = isNaN(dateObject.getTime()) ? 0 : Math.floor(
                   (dateObject - currentDate) / (1000 * 60 * 60 * 24)
                 );
-                let isExpired = dateObject < currentDate;
+                let isExpired = !isNaN(dateObject.getTime()) && dateObject < currentDate;
                 const colorData = {
                   expired: '#a74b47',
                   upcoming: '#f1e05aE6',
@@ -428,21 +448,21 @@ function getTodoWidget(uuid) {
                 return `
                 <div todo-uuid="${todo.uuid}">
               <div class="${prefix('checkbox')}">
-                ${checkbox(todo.isCompleted)}
+                ${checkbox(todo.isCompleted, todo.uuid)}
               </div>
               <div class="${prefix('content')}">
                 <span class="${prefix('title')}">${todo.title}</span>
                 <span class="${prefix('description')}">${
-                  todo.description || 'No description'
+                  todo.description ? convertUrlsToLinks(todo.description) : 'No description'
                 }</span>
                 <div class="${prefix('details')}">
                   <div class="${prefix('details-date')}">
                     ${SVG.calendar('16px', '16px', color)}
                     <span style="color: ${color};">${todo.endDate}${state === 'upcoming' ? ' (upcoming)' : ''}${state === 'expired' ? ' (expired)' : ''}</span>
                   </div>
-                  ${todo.badges.length > 0 ? '<span>·</span>' : ''}
+                  ${(Array.isArray(todo.badges) && todo.badges.length > 0) ? '<span>·</span>' : ''}
                   <div class="${prefix('badges')}">
-                    ${todo.badges
+                    ${(Array.isArray(todo.badges) ? todo.badges : [])
                       .map((badge) => {
                         let color = badge.backgroundColor || getRandomColor();
                         color = color.replace('#', '');
@@ -519,7 +539,10 @@ function getTodoWidget(uuid) {
 
     refs.date.value = getTomorrowsDate();
 
-    refs.refresh.addEventListener('click', execute);
+    refs.refresh.addEventListener('click', () => {
+      removeCompletedTodos();
+      execute();
+    });
 
     const toggle = () => {
       if (refs.newTodoContainer.classList.contains(prefix('close'))) {
@@ -591,39 +614,153 @@ function getTodoWidget(uuid) {
     inner.aadAppendChild(html);
   }
 
-  function applyJS() {
+  function removeCompletedTodos() {
+    // Reload todos from storage to get latest state
+    const widgetData = getWidgetByUUID(uuid);
+    todos = widgetData.config.public.todos || [];
     const newTodos = todos.filter((todo) => !todo.isCompleted);
+    todos = newTodos;
     setConfigByUUID(uuid, { public: { todos: newTodos } });
+  }
 
-    // TODO: REPEATLY CALL UTILS FUNCTION
+  function applyJS() {
+    if (isApplyingJS) return;
+    isApplyingJS = true;
 
     aad_repeatlyCall(
       () => {
-        const newContainer = document.querySelector(
-          `.${prefix('new-container')}`
+        const container = refs.container || document.querySelector(
+          `.${prefix('container')}`
         );
-        if (!newContainer) return false;
+        if (!container) return false;
 
         todos.forEach((todo) => {
-          const uuid = todo.uuid;
+          const todoUuid = todo.uuid;
           if (todo.isCompleted) return;
-          const $parent = document.querySelector(`div[todo-uuid="${uuid}"]`);
+          const $parent = container.querySelector(`div[todo-uuid="${todoUuid}"]`);
+          if (!$parent) return;
           const $checkbox = $parent.querySelector('input[type="checkbox"]');
+          if (!$checkbox || $checkbox.dataset.listenerAdded) return;
+          $checkbox.dataset.listenerAdded = 'true';
 
           $checkbox.addEventListener('change', (e) => {
-            const newTodos = todos.map((todo) => {
-              if (todo.uuid === uuid) {
-                todo.isCompleted = !todo.isCompleted;
+            const updatedTodos = todos.map((t) => {
+              if (t.uuid === todoUuid) {
+                return { ...t, isCompleted: $checkbox.checked };
               }
-              return todo;
+              return t;
             });
-
-            setConfigByUUID(uuid, { public: { todos: newTodos } });
+            todos = updatedTodos;
+            setConfigByUUID(uuid, { public: { todos: updatedTodos } });
           });
+
+          // Handle description links
+          const $description = $parent.querySelector(`.${prefix('description')}`);
+          if ($description) {
+            const links = $description.querySelectorAll('a');
+            links.forEach((link) => {
+              if (link.dataset.listenerAdded) return;
+              link.dataset.listenerAdded = 'true';
+              link.addEventListener('click', (e) => {
+                e.preventDefault();
+                let href = link.getAttribute('href')?.trim();
+                if (!href) return;
+
+                // Check if it's a GitHub URL
+                if (href.includes('github.com')) {
+                  let githubPath = href;
+                  if (href.includes('http')) {
+                    githubPath = href.substring(href.indexOf('github.com') + 10);
+                  }
+                  const splitted = githubPath.split('/').filter(p => p);
+
+                  // Check if it's an issue or pull request
+                  if (splitted.length >= 3 && (splitted[2] === 'issues' || splitted[2] === 'pull')) {
+                    const entryType = splitted[2] === 'issues' ? 'issue' : 'pr';
+                    const url = href.startsWith('http') ? href : 'https://github.com' + githubPath;
+                    const { close } = aad_loading(uuid);
+                    createFrameModal({
+                      title: 'Preview',
+                      url: url,
+                      selector: (doc) => {
+                        if (entryType === 'issue')
+                          return doc.querySelector('[data-testid="issue-viewer-issue-container"]');
+                        return doc.querySelector('.js-quote-selection-container');
+                      },
+                      prefix: prefix('modal-preview'),
+                      onLoaded: () => {
+                        close();
+                      },
+                    });
+                  } else if (splitted.length >= 2) {
+                    // Check if it's a repository
+                    let closeLoading = null;
+                    closeLoading = aad_loading(uuid).close;
+                    APIRequest(`https://api.github.com/repos/${splitted[0]}/${splitted[1]}`).then((res) => {
+                      if (res.status === 200) {
+                        const url = href.startsWith('http') ? href : 'https://github.com' + githubPath;
+                        createFrameModal({
+                          title: 'Repository Preview',
+                          url: url,
+                          selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
+                          prefix: prefix('modal-repository-preview'),
+                          onLoaded: (dom, close) => {
+                            closeLoading();
+
+                            const tbody = dom?.querySelector('tbody');
+                            const skeletons = tbody?.querySelectorAll(
+                              '.Skeleton.Skeleton--text'
+                            );
+                            skeletons?.forEach((skeleton) => {
+                              const parent = skeleton.parentElement;
+                              parent.style.fontSize = '11px';
+                              parent.style.fontWeight = 'normal';
+                              parent.style.opacity = '60%';
+                              skeleton.outerHTML = 'Cannot loaded data';
+                            });
+
+                            function removeBuggyPart(i) {
+                              const nodes = Array.from(
+                                dom.querySelectorAll('.blankslate-container')
+                              );
+                              if (!nodes) return false;
+                              nodes?.forEach((node) => {
+                                node.parentElement.removeChild(node);
+                              });
+                              return true;
+                            }
+
+                            async function tryRemoveBuggyPart() {
+                              for (let i = 0; i < 30; i++) {
+                                if (removeBuggyPart(i)) return;
+                                await new Promise((resolve) => setTimeout(resolve, 100));
+                              }
+                            }
+
+                            tryRemoveBuggyPart();
+                          },
+                        });
+                      } else {
+                        closeLoading();
+                        window.open(href, '_blank');
+                      }
+                    });
+                  } else {
+                    window.open(href, '_blank');
+                  }
+                } else {
+                  // Not a GitHub URL, open in new tab
+                  window.open(href, '_blank');
+                }
+              }, { passive: false });
+            });
+          }
         });
+        isApplyingJS = false;
+        return true;
       },
       {
-        times: 10,
+        times: 10,  
         start_ms: 100,
         type: 'exponentially',
       }
@@ -635,6 +772,7 @@ function getTodoWidget(uuid) {
     applyJS();
   }
 
+  removeCompletedTodos();
   execute();
   return {
     widget

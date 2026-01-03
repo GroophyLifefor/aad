@@ -30,7 +30,7 @@ const addingWidgets = [
     name: 'Entries',
     validName: 'entries',
     image:
-      'https://aad-ext.vercel.app/widgets/entries.png',
+      'https://aad.yelix.cloud/widgets/entries.png',
     description:
       "If you're too busy with work, this is for you, freely manage and track issues and pull-requests.",
   },

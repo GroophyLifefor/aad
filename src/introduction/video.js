@@ -1003,7 +1003,7 @@ async function startConference() {
   const w8refs = {};
   const w8 = render(
     w8refs,
-    `<img ref="img" style="background-color: #ffbc01;" class="aad-come-from-bottom" src="https://aad-ext.vercel.app/sponsorships/kommunity.jpg" />`
+    `<img ref="img" style="background-color: #ffbc01;" class="aad-come-from-bottom" src="https://aad.yelix.cloud/sponsorships/kommunity.jpg" />`
   );
   w7refs.content.aadAppendChild(w8);
   await aad_sleep(4000);

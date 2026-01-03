@@ -2,7 +2,7 @@ const validFetchHosts = [
   'api.github.com',
   'github.com',
   'http://localhost:3000',
-  'aad-ext.vercel.app',
+  'aad.yelix.cloud',
 ];
 
 function parseUrl(url) {

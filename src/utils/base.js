@@ -1,7 +1,8 @@
 let GitHubUsername = '';
-const isLocal = false
-const serverDomain = isLocal ? 'http://localhost:3000' : 'https://aad-ext.vercel.app';
-const GitHubRecentActivity = [];
+const isLocal = false;
+const serverDomain = isLocal
+  ? 'http://localhost:3000'
+  : 'https://aad.yelix.cloud';
 const zIndex = {
   modal: 1000,
   drawer: 1010,
@@ -19,7 +20,7 @@ const NO_THANK_YOU = false;
  */
 
 /**
- * Creates a debounced function that delays the execution of the `callback` until 
+ * Creates a debounced function that delays the execution of the `callback` until
  * after `wait` milliseconds have elapsed since the last time the debounced function was invoked.
  *
  * @function aad_debounce
@@ -51,7 +52,6 @@ const aad_debounce = (callback, wait) => {
     }, wait);
   };
 };
-
 
 const callApplyWidgetResponsibility = aad_debounce(() => {
   applyWidgetResponsibility();
@@ -289,40 +289,7 @@ function addWidget(index, widget, _config) {
   }
 }
 
-function prepareRecentActivity(_feed) {
-  const recentActivityNode = _feed.querySelectorAll(
-    '[data-issue-and-pr-hovercards-enabled][data-repository-hovercards-enabled]'
-  )[0];
-  Array.from(recentActivityNode?.children || []).forEach((child) => {
-    const hrefElement = child.querySelector('a');
-    const href = hrefElement.getAttribute('href');
-    const splitted = href.split('/');
 
-    let type = 'combat helicopter';
-    if (splitted[3] === 'issues') {
-      type = 'issue';
-    }
-    if (splitted[3] === 'pull') {
-      type = 'pull-request';
-    }
-
-    if (type === 'combat helicopter') {
-      throw new Error('Invalid type of recent activity.');
-      return; // I don't trust javascript
-    }
-
-    const OWNER = splitted[1];
-    const REPO = splitted[2];
-    const NUMBER = splitted[4];
-
-    GitHubRecentActivity.push({
-      type,
-      owner: OWNER,
-      repo: REPO,
-      number: NUMBER,
-    });
-  });
-}
 function prepareUsername(_feed) {
   function way1() {
     const _ = document.querySelectorAll(
@@ -453,7 +420,6 @@ function clearFeed() {
         'transitionend',
         function () {
           prepareUtils();
-          prepareRecentActivity(_feed);
           prepareUsername(_feed);
           const event = new CustomEvent('onAADLoaded', {});
           document.dispatchEvent(event);

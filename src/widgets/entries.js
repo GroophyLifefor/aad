@@ -128,11 +128,16 @@ function getTrendingWidget(uuid) {
       private: 'is:private',
     };
     const onOrganizationConfig = () => {
-      if (typeof onOrganization === 'string' && onOrganization.length !== 0) {
-        return `user:${onOrganization}`;
-      } else {
-        return '';
+      if (typeof onOrganization === 'string' && onOrganization.trim().length !== 0) {
+        const value = onOrganization.trim();
+        // If contains "/", treat as repository (owner/repo)
+        if (value.includes('/')) {
+          return `repo:${value}`;
+        }
+        // Otherwise, treat as organization/user
+        return `user:${value}`;
       }
+      return '';
     };
     const sortConfig = {
       newest: '',
@@ -301,10 +306,13 @@ function getTrendingWidget(uuid) {
   }
 
   function checkEntries(renderCount) {
-    aad_fetch(url(1), {
+    const fetchUrl = url(1);
+    aad_fetch(fetchUrl, {
       redirect: 'follow',
     })
-      .then((response) => response.text())
+      .then((response) => {
+        return response.text();
+      })
       .then((html) => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -324,10 +332,14 @@ function getTrendingWidget(uuid) {
 
         endLoadingScreen();
 
-        const _list = doc.querySelector('.js-navigation-container');
-        const list = _list?.cloneNode(true) || null;
-        const childs =
-          doc.querySelector('.js-navigation-container')?.children || [];
+        const _list = Array.from(doc.querySelectorAll('*')).filter((item) =>
+          item
+            .getAttribute('aria-labelledby')
+            ?.includes('list-view-container-title')
+        );
+        const listElement = _list?.[0] || null;
+        const list = listElement?.cloneNode(true) || null;
+        const childs = listElement?.children || [];
         if (!!list) list.innerHTML = '';
 
         for (let i = 0; i < renderCount; i++) {
@@ -509,7 +521,7 @@ function getTrendingWidget(uuid) {
               title: 'Preview',
               url: url,
               selector: (doc) =>
-                doc.querySelector('.js-quote-selection-container'),
+                doc.querySelector('[data-testid="issue-viewer-issue-container"]'),
               prefix: prefix('modal-repository-preview'),
               onLoaded: () => {
                 close();
@@ -828,8 +840,9 @@ loadNewWidget('entries', getTrendingWidget, {
     },
     {
       field: 'onOrganization',
-      type: 'github_user',
-      label: 'Entries on this organization',
+      type: 'text',
+      placeholder: 'organization or owner/repo',
+      label: 'Entries on this organization or repository (e.g., "openjs-foundation" or "GroophyLifefor/aad")',
     },
     {
       field: 'sort',
