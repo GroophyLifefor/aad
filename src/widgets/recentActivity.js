@@ -291,7 +291,12 @@ function getRecentActivityWidget(uuid) {
         url: url,
         selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
         prefix: prefix('modal-repository-preview'),
-        onLoaded: () => {
+        onLoaded: (dom) => {
+          // Remove js-toggle-stuck element
+          const jsToggleStuck = dom?.querySelector('.js-toggle-stuck');
+          if (jsToggleStuck) {
+            jsToggleStuck.remove();
+          }
           close();
         },
       });

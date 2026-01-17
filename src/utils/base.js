@@ -398,9 +398,13 @@ function clearFeed() {
         }
       `);
 
-    document.querySelector(
-      '.AppHeader-context-item-label'
-    ).innerHTML = ` Dashboard <span class="ActionListItem-label color-fg-muted f6">(Click text to back default feed)</span>`;
+    const $link = document.querySelectorAll(
+      'header [href=\"https://github.com/\"]'
+    )[1];
+    const $span = $link.querySelector('span');
+    if ($span) {
+      $span.innerHTML = ` Dashboard <span class="ActionListItem-label color-fg-muted f6">(Click text to back default feed)</span>`;
+    }
 
     // Clear the feed (entire homepage without header)
     const aside = document.querySelector('.application-main > div > aside');

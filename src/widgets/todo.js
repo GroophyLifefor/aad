@@ -707,6 +707,12 @@ function getTodoWidget(uuid) {
                           onLoaded: (dom, close) => {
                             closeLoading();
 
+                            // Remove js-toggle-stuck element
+                            const jsToggleStuck = dom?.querySelector('.js-toggle-stuck');
+                            if (jsToggleStuck) {
+                              jsToggleStuck.remove();
+                            }
+
                             const tbody = dom?.querySelector('tbody');
                             const skeletons = tbody?.querySelectorAll(
                               '.Skeleton.Skeleton--text'

@@ -103,7 +103,7 @@ function searchInModal() {
     isSearchInModalInitialized = true;
   }
   const $search = document.querySelector('.search-suggestions');
-  const $searchButton = document.querySelector('.AppHeader-search-whenNarrow');
+  const $searchButton = document.querySelector('button[type=\"button\"][aria-label^=\"Search or jump\"]');
   const $giveFeedbackSpan = document.querySelector(
     '.search-feedback-prompt > button > span > span'
   );

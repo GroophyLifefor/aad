@@ -35,7 +35,7 @@ function getGeneralSettingsComp() {
         ${SVG.settings('16px', '16px')}
       </div>
     </div>
-    `
+    `,
   );
 
   refs.settings.addEventListener('click', () => {
@@ -64,7 +64,7 @@ function getGeneralSettingsComp() {
 
         // return getAdvancedSettings().node;
         return getNewSettings().node;
-      }
+      },
     );
     return;
     let _widgets = widgetResponsibility.breaks;
@@ -78,7 +78,7 @@ function getGeneralSettingsComp() {
     settingsCard(
       {
         title: 'Widget Responsibilty Settings',
-        border: 'none'
+        border: 'none',
       },
       [
         {
@@ -91,7 +91,6 @@ function getGeneralSettingsComp() {
             // }, 1000);
             // return;
             // /* Video DEMO END */
-
 
             props.closeModal();
 
@@ -120,7 +119,7 @@ function getGeneralSettingsComp() {
 
                 // return getAdvancedSettings().node;
                 return getNewSettings().node;
-              }
+              },
             );
           },
         },
@@ -223,7 +222,7 @@ function getGeneralSettingsComp() {
         });
         applyWidgetResponsibility();
         saveWidgetResponsibility();
-      }
+      },
     );
   });
 
@@ -232,7 +231,18 @@ function getGeneralSettingsComp() {
   //   setWidgetLgCount(e.target.value);
   // });
 
-  const userProfile = document.querySelector('.AppHeader-user');
-  const parent = userProfile.parentNode;
-  parent.insertBefore(html, userProfile);
+  const userProfileImage = document.querySelector(
+    'header [data-component=\"Avatar\"]',
+  );
+  const userProfile = userProfileImage?.parentNode;
+  const userProfileParent = userProfile?.parentNode;
+  const profileBars = userProfileParent?.parentNode;
+
+  if (!!userProfileParent && !!profileBars) {
+    profileBars.insertBefore(html, userProfileParent);
+  } else {
+    console.warn(
+      'Failed to insert general settings component, no user profile',
+    );
+  }
 }

@@ -87,3 +87,17 @@ the number of users)
 - New quick look GitHub Repositories added, to see your repositories quickly. You can open by classic way to move profile page, open sidebar, click "Your repositories" button.
 
 ## 1.2.5
+
+- repository preview buggy part fixed
+- mine repositories quick look buggy part fixed
+- entries won't loading fixed
+- recent activity won't loading fixed
+- added repository based rendering to entries widget
+- more todo widget stability
+- repo/pr/issue preview opener in todo description | for other links open in new tab
+- issue preview won't open fixed
+
+## 1.2.6
+
+- fixed query selector problems because of GitHub UI changes
+- fixed modal preview problems in toggle-stuck elements
