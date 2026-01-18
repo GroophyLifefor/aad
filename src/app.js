@@ -3,7 +3,8 @@ const aad_site_url = window.location.href;
 function reloadWidgets() {
   const start = Date.now();
 
-  const _feed = document.querySelector('.application-main > div > div');
+  const _feed = $('.application-main > div > div', { required: true, errorContext: 'reloadWidgets' });
+  if (!_feed) return;
 
   _feed.innerHTML = '';
 
@@ -115,8 +116,8 @@ function loadWidgets() {
 }
 
 function applyDragAndDrop() {
-  const draggbles = document.querySelectorAll('[widgetContainer="true"]');
-  const containers = document.querySelectorAll('[aad-container="true"]');
+  const draggbles = $$('[widgetContainer="true"]');
+  const containers = $$('[aad-container="true"]');
 
   draggbles.forEach((draggble) => {
     //for start dragging costing opacity
@@ -134,7 +135,7 @@ function applyDragAndDrop() {
   containers.forEach((container) => {
     const debouncedDragOver = aad_debounce((args) => {
       const afterElement = dragAfterElement(container, args.clientY);
-      const dragging = document.querySelector('.aad-dragging');
+      const dragging = $('.aad-dragging');
 
       if (!dragging) return;
 
@@ -174,7 +175,9 @@ function applyDragAndDrop() {
 }
 
 async function main() {
-  const _feed = document.querySelector('.application-main > div > div');
+  const _feed = $('.application-main > div > div', { required: true, errorContext: 'main app init' });
+  if (!_feed) return;
+  
   _feed.setAttribute('style', '');
 
   const widgetContainer = getWidgetContainer();

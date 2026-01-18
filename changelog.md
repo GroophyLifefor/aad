@@ -101,3 +101,12 @@ the number of users)
 
 - fixed query selector problems because of GitHub UI changes
 - fixed modal preview problems in toggle-stuck elements
+
+## 1.2.7
+
+- Safe DOM utilities with graceful error handling added
+- Centralized GitHub preview system added
+- Unified link handling for GitHub URLs added
+- Reduced duplicated code across widgets (~300 lines removed), refactored
+- Better handling when GitHub changes their UI, refactored
+- Consistent error reporting for developers, refactored

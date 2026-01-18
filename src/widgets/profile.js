@@ -96,7 +96,7 @@ function getProfileWidget(uuid) {
         createFrameModal({
           title: 'Followers',
           url: url,
-          selector: (doc) => doc.querySelector('.Layout-main'),
+          selector: (doc) => $('.Layout-main', { context: doc }),
           prefix: prefix+'-modal-followers',
         })
       });
@@ -106,7 +106,7 @@ function getProfileWidget(uuid) {
         createFrameModal({
           title: 'Following',
           url: url,
-          selector: (doc) => doc.querySelector('.Layout-main'),
+          selector: (doc) => $('.Layout-main', { context: doc }),
           prefix: prefix+'-modal-following',
         })
       });

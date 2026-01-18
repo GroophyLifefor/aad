@@ -83,7 +83,8 @@ function createDrawer(inner, config) {
       </div>`
   );
 
-  const page = document.querySelector(`body > .page-responsive`);
+  const page = $('body > .page-responsive');
+  if (!page) return { closeDrawer: () => {} }; // Gracefully exit if page element not found
 
   function closeDrawer() {
     wrapperRefs.wrapper.remove();

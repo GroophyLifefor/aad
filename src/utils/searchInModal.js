@@ -37,14 +37,14 @@ const searchInModalConfig = {
     title: 'Search Preview',
     url: (urlParameter) =>
       `https://github.com/search?q=${urlParameter}&type=repositories`,
-    selector: (doc) => doc.querySelector('main'),
+    selector: (doc) => $('main', { context: doc }),
     prefix: 'aad-custom-utils-search-in-modal-modal-search-preview',
     headers: requestOptions,
   },
   repository: {
     title: 'Repository Preview',
     url: (urlParameter) => 'https://github.com' + urlParameter,
-    selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
+    selector: (doc) => $('#js-repo-pjax-container', { context: doc }),
     prefix: 'aad-custom-utils-search-in-modal-modal-repository-preview',
   },
 };
@@ -63,12 +63,10 @@ const openSearchInModalModal = aad_debounce((searchType, parameters) => {
 }, 250);
 
 function oneTimeSearchInModal() {
-  const $searchInput = document.querySelector(
-    '[data-target="query-builder.input"]'
-  );
-  const $giveFeedbackSpan = document.querySelector(
-    '.search-feedback-prompt > button > span > span'
-  );
+  const $searchInput = $('[data-target="query-builder.input"]');
+  const $giveFeedbackSpan = $('.search-feedback-prompt > button > span > span');
+  
+  if (!$searchInput || !$giveFeedbackSpan) return;
 
   $searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -102,14 +100,13 @@ function searchInModal() {
     oneTimeSearchInModal();
     isSearchInModalInitialized = true;
   }
-  const $search = document.querySelector('.search-suggestions');
-  const $searchButton = document.querySelector('button[type=\"button\"][aria-label^=\"Search or jump\"]');
-  const $giveFeedbackSpan = document.querySelector(
-    '.search-feedback-prompt > button > span > span'
-  );
-  const $resultsList = document.querySelector(
-    '.ActionListWrap[data-target="query-builder.resultsList"]'
-  );
+  const $search = $('.search-suggestions');
+  const $searchButton = $('button[type="button"][aria-label^="Search or jump"]');
+  const $giveFeedbackSpan = $('.search-feedback-prompt > button > span > span');
+  const $resultsList = $('.ActionListWrap[data-target="query-builder.resultsList"]');
+
+  // Gracefully exit if elements not found (GitHub UI may have changed)
+  if (!$search || !$giveFeedbackSpan) return;
 
   $giveFeedbackSpan.innerHTML = '⌛ Give feedback';
 
@@ -141,9 +138,8 @@ function searchInModal() {
     $link.addEventListener('click', (e) => {
       e.preventDefault();
       const href = $link.getAttribute('href');
-      const type = $link.parentElement.parentElement.parentElement
-        .querySelector('h3')
-        .innerText.trim();
+      const typeHeader = $closest($link, 'li')?.querySelector('h3');
+      const type = typeHeader?.innerText?.trim() || '';
       if (type === 'Repositories') {
         // createFrameModal({
         //   title: 'Repository Preview',

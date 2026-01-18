@@ -1,11 +1,7 @@
 function initQuickLookOfGitHubNotifications() {
-  const notificationsButton = document.getElementById(
-    'AppHeader-notifications-button'
-  );
+  // Use safe querySelector - GitHub UI may change
+  const notificationsButton = $('#AppHeader-notifications-button');
   if (!notificationsButton) {
-    // console.warn(
-    //   'Notifications button not found <-- initQuickLookOfGitHubNotifications()'
-    // );
     return;
   }
 
@@ -20,9 +16,7 @@ function initQuickLookOfGitHubNotifications() {
       title: 'GitHub Notifications Preview',
       url: e.target.href,
       selector: (doc) =>
-        doc.querySelector(
-          'main#js-repo-pjax-container .notifications-list.js-notifications-list'
-        ),
+        $('main#js-repo-pjax-container .notifications-list.js-notifications-list', { context: doc }),
       prefix: prefix('modal-github-notifications-preview'),
       onLoaded: (dom) => {
         close();
@@ -31,37 +25,20 @@ function initQuickLookOfGitHubNotifications() {
           return;
         }
 
-        const header = dom.querySelector('.Box-header');
-        if (header) {
+        // Use safe DOM utilities for cleanup
+        withElement('.Box-header', (header) => {
           header.innerHTML =
             '<span class="aad-small-text" style="margin-left: 16px;">AAD Quick Look - GitHub Notifications</span>';
-        }
+        }, { context: dom });
 
-        const eachBox = dom.querySelectorAll('.js-navigation-container > li');
-        if (eachBox) {
-          eachBox.forEach((el) => {
-            el.addEventListener('mouseenter', (e) => {
-              const unarchived = e.target.querySelector(
-                '.notification-action-mark-unarchived'
-              );
-              if (unarchived) {
-                unarchived.remove();
-              }
-
-              const subscribe = e.target.querySelector(
-                '.notification-action-subscribe'
-              );
-              if (subscribe) {
-                subscribe.remove();
-              }
-
-              const unstar = e.target.querySelector('.notification-action-unstar');
-              if (unstar) {
-                unstar.remove();
-              }
-            });
+        withElements('.js-navigation-container > li', (el) => {
+          el.addEventListener('mouseenter', (e) => {
+            // Remove elements that don't work in modal context
+            $remove('.notification-action-mark-unarchived', { context: e.target });
+            $remove('.notification-action-subscribe', { context: e.target });
+            $remove('.notification-action-unstar', { context: e.target });
           });
-        }
+        }, { context: dom });
       },
     });
   });

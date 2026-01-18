@@ -326,3 +326,72 @@ function aadRender(dictionary, html) {
   }
   return parentNodes;
 }
+
+/**
+ * Creates loading screen helpers for a widget container.
+ * Reduces duplication of loading screen logic across widgets.
+ * 
+ * @param {HTMLElement} container - The container element to show loading in
+ * @param {function} prefix - Prefixer function for CSS class names
+ * @returns {{ start: () => void, end: () => void }}
+ * 
+ * @example
+ * const loading = createWidgetLoadingScreen(refs.container, prefix);
+ * loading.start();
+ * // ... fetch data ...
+ * loading.end();
+ */
+function createWidgetLoadingScreen(container, prefix) {
+  // Add CSS for loader (only once per prefix)
+  addCustomCSS(`
+    .${prefix('loader-container')} {
+      width: 100%;
+      height: 240px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .${prefix('loader')} {
+      width: 70px;
+      height: 50px;
+      box-sizing: border-box;
+      background:
+        conic-gradient(from 135deg at top,#0000, #fff 1deg 90deg,#0000 91deg) right -20px bottom 8px/18px 9px,
+        linear-gradient(#fff 0 0) bottom/100% 8px,
+        #000;
+      background-repeat: no-repeat;
+      border-bottom: 8px solid #000;
+      position: relative;
+      animation: ${prefix('loader-anim-0')} 2s infinite linear;
+    }
+    
+    .${prefix('loader')}::before {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 14px;
+      background: lightblue;
+      left: 10px;
+      animation: ${prefix('loader-anim-1')} 2s infinite cubic-bezier(0,200,1,200);
+    }
+    
+    @keyframes ${prefix('loader-anim-0')} {
+      100% { background-position: left -20px bottom 8px,bottom }
+    }
+    
+    @keyframes ${prefix('loader-anim-1')} {
+      0%,50%   { bottom: 8px }
+      90%,100% { bottom: 8.1px }
+    }
+  `);
+
+  return {
+    start: () => {
+      container.innerHTML = `<div class="${prefix('loader-container')}"><div class="${prefix('loader')}"></div></div>`;
+    },
+    end: () => {
+      container.innerHTML = '';
+    }
+  };
+}

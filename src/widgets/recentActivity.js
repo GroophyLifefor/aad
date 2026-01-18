@@ -109,10 +109,8 @@ function getRecentActivityWidget(uuid) {
       }
       `);
 
-    const isExist = document.querySelector(`.${prefix('container')}`);
-    if (!!isExist) {
-      isExist.remove();
-    }
+    // Remove existing container if present
+    $remove(`.${prefix('container')}`);
 
     refs = {};
     const html = render(
@@ -258,22 +256,22 @@ function getRecentActivityWidget(uuid) {
 
       if (width < FREAKING_MAGIC_NUMBER && state !== 'hide') {
         state = 'hide';
-        refs.container
-          .querySelectorAll('.issue-meta-section')
-          .forEach((entry) => {
-            const actualElement = entry.parentElement;
+        withElements('.issue-meta-section', (entry) => {
+          const actualElement = $parent(entry);
+          if (actualElement) {
             actualElement.classList.remove(prefix('show'));
             actualElement.classList.add(prefix('hide'));
-          });
+          }
+        }, { context: refs.container });
       } else if (width >= FREAKING_MAGIC_NUMBER && state !== 'show') {
         state = 'show';
-        refs.container
-          .querySelectorAll('.issue-meta-section')
-          .forEach((entry) => {
-            const actualElement = entry.parentElement;
+        withElements('.issue-meta-section', (entry) => {
+          const actualElement = $parent(entry);
+          if (actualElement) {
             actualElement.classList.remove(prefix('hide'));
             actualElement.classList.add(prefix('show'));
-          });
+          }
+        }, { context: refs.container });
       }
     };
 
@@ -284,77 +282,8 @@ function getRecentActivityWidget(uuid) {
   }
 
   function listenEntryClicks() {
-    const loadRepositoryPreview = (url) => {
-      const { close } = aad_loading(uuid);
-      createFrameModal({
-        title: 'Repository Preview',
-        url: url,
-        selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
-        prefix: prefix('modal-repository-preview'),
-        onLoaded: (dom) => {
-          // Remove js-toggle-stuck element
-          const jsToggleStuck = dom?.querySelector('.js-toggle-stuck');
-          if (jsToggleStuck) {
-            jsToggleStuck.remove();
-          }
-          close();
-        },
-      });
-    };
-
-    const links = refs.container.querySelectorAll('a');
-    links.forEach((link) => {
-      link.addEventListener(
-        'click',
-        (e) => {
-          e.preventDefault();
-          let href = link.getAttribute('href')?.trim();
-          if (href.includes('http')) {
-            href = href.substring(18);
-          }
-          const splitted = href.split('/');
-
-          if (splitted[3] === 'issues') {
-            const url = 'https://github.com' + href;
-            const { close } = aad_loading(uuid);
-            createFrameModal({
-              title: 'Preview',
-              url: url,
-              selector: (doc) =>
-                doc.querySelector('.js-quote-selection-container'),
-              prefix: prefix('modal-repository-preview'),
-              onLoaded: () => {
-                close();
-              },
-            });
-          } else {
-            // check is repository
-            APIRequest(
-              'https://api.github.com/repos/' + splitted[1] + '/' + splitted[2]
-            ).then((res) => {
-              if (res.status === 200) {
-                loadRepositoryPreview('https://github.com' + href);
-              } else {
-                // check is user
-                APIRequest('https://api.github.com/users/' + splitted[1]).then(
-                  (res) => {
-                    if (res.status === 200) {
-                      loadUserPreview('https://github.com' + href);
-                    } else {
-                      sendNewNotification('Unvalid action', {
-                        type: 'error',
-                        timeout: 3000,
-                      });
-                    }
-                  }
-                );
-              }
-            });
-          }
-        },
-        { passive: false }
-      );
-    });
+    // Use centralized GitHub link handler
+    setupGitHubLinkHandlers(refs.container, { uuid, prefix });
   }
 
   function execute(renderCount = 3) {

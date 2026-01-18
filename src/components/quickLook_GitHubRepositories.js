@@ -1,39 +1,32 @@
 function initQuickLookOfGitHubRepositories() {
-  const RepositoriesButton = document.querySelector(
-    'a[href*="?tab=repositories"]'
-  );
+  // Use safe querySelector - GitHub UI may change
+  const RepositoriesButton = $('a[href*="?tab=repositories"]');
   if (!RepositoriesButton) {
-    // console.warn(
-    //   'My Repositories button not found <-- initQuickLookOfGitHubRepositories()'
-    // );
-
     setTimeout(() => {
       initQuickLookOfGitHubRepositories();
     }, 100);
     return;
   }
 
-  // console.log(
-  //   'My Repositories button found <-- initQuickLookOfGitHubRepositories()',
-  //   RepositoriesButton
-  // );
   const url = RepositoriesButton.href;
   var new_element = RepositoriesButton.cloneNode(true);
-  const parent = RepositoriesButton.parentNode;
+  const parent = $parent(RepositoriesButton);
+  if (!parent) return; // Gracefully exit if parent not found
+  
   parent.replaceChild(new_element, RepositoriesButton);
 
   async function removeOldOne() {
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   
     for (let i = 0; i < 20; i++) {
-      const elements = document.querySelectorAll('a[href*="?tab=repositories"]');
-      const parent = elements[0]?.parentNode;
+      const elements = $$('a[href*="?tab=repositories"]');
+      const parent = elements[0] ? $parent(elements[0]) : null;
       const child = parent?.childNodes[1];
       if (child) {
         child.outerHTML = '';
       }
   
-      await delay(100); // wait for 100ms before the next iteration
+      await delay(100);
     }
   }
   removeOldOne();
@@ -42,27 +35,8 @@ function initQuickLookOfGitHubRepositories() {
     e.preventDefault();
 
     const uuid = generateUUID();
-    const prefix = prefixer('repositories-modal', uuid, 'component');
-
-    const { close } = aad_loading(uuid);
-    createFrameModal({
-      title: 'GitHub Repositories Preview',
-      url,
-      selector: (doc) => doc.querySelector('main .Layout-main'),
-      prefix: prefix('modal-github-repositories-preview'),
-      onLoaded: (dom) => {
-        close();
-
-        if (!dom) {
-          return;
-        }
-
-        dom.querySelectorAll('.starring-container').forEach((el) => {
-          const buggyVerticalBar = el.nextElementSibling;
-          buggyVerticalBar?.remove();
-        });
-      },
-    });
+    // Use centralized preview service
+    openRepositoriesTabPreview(url, { uuid, prefix: prefixer('repositories-modal', uuid, 'component') });
   });
 }
 

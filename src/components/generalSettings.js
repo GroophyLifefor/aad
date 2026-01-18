@@ -231,18 +231,14 @@ function getGeneralSettingsComp() {
   //   setWidgetLgCount(e.target.value);
   // });
 
-  const userProfileImage = document.querySelector(
-    'header [data-component=\"Avatar\"]',
-  );
-  const userProfile = userProfileImage?.parentNode;
-  const userProfileParent = userProfile?.parentNode;
-  const profileBars = userProfileParent?.parentNode;
+  // Use safe DOM utilities - GitHub UI may change
+  const userProfileImage = $('header [data-component="Avatar"]');
+  const userProfile = $parent(userProfileImage);
+  const userProfileParent = $parent(userProfile);
+  const profileBars = $parent(userProfileParent);
 
-  if (!!userProfileParent && !!profileBars) {
+  if (userProfileParent && profileBars) {
     profileBars.insertBefore(html, userProfileParent);
-  } else {
-    console.warn(
-      'Failed to insert general settings component, no user profile',
-    );
   }
+  // Silently skip if elements not found - GitHub UI may have changed
 }

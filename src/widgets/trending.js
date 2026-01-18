@@ -169,10 +169,8 @@ function getTrendingWidget(uuid) {
       }
       `);
 
-    const isExist = document.querySelector(`.${prefix('container')}`);
-    if (!!isExist) {
-      isExist.remove();
-    }
+    // Remove existing container if present
+    $remove(`.${prefix('container')}`);
 
     refs = {};
     const html = render(
@@ -297,97 +295,14 @@ function getTrendingWidget(uuid) {
     }
 
     const changeUrl = () => {
-      const loadRepositoryPreview = (url, config) => {
-        let closeLoading = null;
-        closeLoading = aad_loading(uuid).close;
-
-        function load(_url) {
-          createFrameModal({
-            title: 'Repository Preview',
-            url: _url,
-            selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
-            prefix: prefix('modal-repository-preview'),
-            onLoaded: (dom, close) => {
-              closeLoading();
-
-              // Remove js-toggle-stuck element
-              const jsToggleStuck = dom?.querySelector('.js-toggle-stuck');
-              if (jsToggleStuck) {
-                jsToggleStuck.remove();
-              }
-
-              const tbody = dom?.querySelector('tbody');
-              const skeletons = tbody?.querySelectorAll(
-                '.Skeleton.Skeleton--text'
-              );
-              skeletons?.forEach((skeleton) => {
-                const parent = skeleton.parentElement;
-                parent.style.fontSize = '11px';
-                parent.style.fontWeight = 'normal';
-                parent.style.opacity = '60%';
-                skeleton.outerHTML = 'Cannot loaded data';
-              });
-
-              function removeBuggyPart(i) {
-                const nodes = Array.from(
-                  dom.querySelectorAll('.blankslate-container')
-                );
-                if (!nodes) return false;
-                nodes?.forEach((node) => {
-                  node.parentElement.removeChild(node);
-                });
-                return true;
-              }
-
-              async function tryRemoveBuggyPart() {
-                for (let i = 0; i < 30; i++) {
-                  if (removeBuggyPart(i)) return;
-                  await new Promise((resolve) => setTimeout(resolve, 100));
-                }
-              }
-
-              tryRemoveBuggyPart();
-
-              if (config.freeRedirect === true) {
-                const links = dom?.querySelectorAll('a') || [];
-                links.forEach((link) => {
-                  link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const href = link.getAttribute('href');
-                    close();
-
-                    console.log('href', href);
-                    if (href.includes('http')) {
-                      sendNewNotification('Unvalid action', {
-                        type: 'error',
-                        timeout: 3000,
-                      });
-                      return;
-                    }
-
-                    closeLoading = aad_loading(uuid).close;
-                    load(href);
-                  });
-                });
-              }
-            },
-          });
-        }
-
-        load(url);
+      // Use centralized preview service for repository previews
+      const loadRepositoryPreviewWithRedirect = (url) => {
+        openRepositoryPreview(url, { uuid, prefix });
       };
 
-      const loadUserPreview = (url) => {
-        const { close } = aad_loading(uuid);
-        createFrameModal({
-          title: 'User Preview',
-          url: url,
-          selector: (doc) => doc.querySelector('main'),
-          prefix: prefix('modal-user-preview'),
-          onLoaded: () => {
-            close();
-          },
-        });
+      // Use centralized preview service for user previews
+      const loadUserPreviewLocal = (url) => {
+        openUserPreview(url, { uuid, prefix });
       };
 
       const links = refs.container.querySelectorAll('a');
@@ -505,9 +420,7 @@ function getTrendingWidget(uuid) {
             ).then((res) => {
               if (res.status === 200) {
                 close();
-                loadRepositoryPreview('https://github.com' + href, {
-                  freeRedirect: true,
-                });
+                loadRepositoryPreviewWithRedirect('https://github.com' + href);
               } else {
                 updateText('Checking is user...');
 
@@ -516,9 +429,7 @@ function getTrendingWidget(uuid) {
                   (res) => {
                     if (res.status === 200) {
                       close();
-                      loadUserPreview('https://github.com' + href, {
-                        freeRedirect: true,
-                      });
+                      loadUserPreviewLocal('https://github.com' + href);
                     } else {
                       close();
                       tryUnderstandValidOperations();

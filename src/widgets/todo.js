@@ -41,7 +41,8 @@ function getTodoWidget(uuid) {
   }
 
   function buildTemplate() {
-    const old = document.querySelector(`.${prefix('group')}`);
+    // Remove existing group if present
+    const old = $(`.${prefix('group')}`);
     if (old) {
       refs = {};
       old.remove();
@@ -654,113 +655,34 @@ function getTodoWidget(uuid) {
             setConfigByUUID(uuid, { public: { todos: updatedTodos } });
           });
 
-          // Handle description links
-          const $description = $parent.querySelector(`.${prefix('description')}`);
-          if ($description) {
+          // Handle description links using centralized GitHub link handler
+          withElement(`.${prefix('description')}`, ($description) => {
             const links = $description.querySelectorAll('a');
             links.forEach((link) => {
               if (link.dataset.listenerAdded) return;
               link.dataset.listenerAdded = 'true';
               link.addEventListener('click', (e) => {
                 e.preventDefault();
-                let href = link.getAttribute('href')?.trim();
+                const href = link.getAttribute('href')?.trim();
                 if (!href) return;
 
                 // Check if it's a GitHub URL
                 if (href.includes('github.com')) {
-                  let githubPath = href;
-                  if (href.includes('http')) {
-                    githubPath = href.substring(href.indexOf('github.com') + 10);
-                  }
-                  const splitted = githubPath.split('/').filter(p => p);
-
-                  // Check if it's an issue or pull request
-                  if (splitted.length >= 3 && (splitted[2] === 'issues' || splitted[2] === 'pull')) {
-                    const entryType = splitted[2] === 'issues' ? 'issue' : 'pr';
-                    const url = href.startsWith('http') ? href : 'https://github.com' + githubPath;
-                    const { close } = aad_loading(uuid);
-                    createFrameModal({
-                      title: 'Preview',
-                      url: url,
-                      selector: (doc) => {
-                        if (entryType === 'issue')
-                          return doc.querySelector('[data-testid="issue-viewer-issue-container"]');
-                        return doc.querySelector('.js-quote-selection-container');
-                      },
-                      prefix: prefix('modal-preview'),
-                      onLoaded: () => {
-                        close();
-                      },
-                    });
-                  } else if (splitted.length >= 2) {
-                    // Check if it's a repository
-                    let closeLoading = null;
-                    closeLoading = aad_loading(uuid).close;
-                    APIRequest(`https://api.github.com/repos/${splitted[0]}/${splitted[1]}`).then((res) => {
-                      if (res.status === 200) {
-                        const url = href.startsWith('http') ? href : 'https://github.com' + githubPath;
-                        createFrameModal({
-                          title: 'Repository Preview',
-                          url: url,
-                          selector: (doc) => doc.querySelector('#js-repo-pjax-container'),
-                          prefix: prefix('modal-repository-preview'),
-                          onLoaded: (dom, close) => {
-                            closeLoading();
-
-                            // Remove js-toggle-stuck element
-                            const jsToggleStuck = dom?.querySelector('.js-toggle-stuck');
-                            if (jsToggleStuck) {
-                              jsToggleStuck.remove();
-                            }
-
-                            const tbody = dom?.querySelector('tbody');
-                            const skeletons = tbody?.querySelectorAll(
-                              '.Skeleton.Skeleton--text'
-                            );
-                            skeletons?.forEach((skeleton) => {
-                              const parent = skeleton.parentElement;
-                              parent.style.fontSize = '11px';
-                              parent.style.fontWeight = 'normal';
-                              parent.style.opacity = '60%';
-                              skeleton.outerHTML = 'Cannot loaded data';
-                            });
-
-                            function removeBuggyPart(i) {
-                              const nodes = Array.from(
-                                dom.querySelectorAll('.blankslate-container')
-                              );
-                              if (!nodes) return false;
-                              nodes?.forEach((node) => {
-                                node.parentElement.removeChild(node);
-                              });
-                              return true;
-                            }
-
-                            async function tryRemoveBuggyPart() {
-                              for (let i = 0; i < 30; i++) {
-                                if (removeBuggyPart(i)) return;
-                                await new Promise((resolve) => setTimeout(resolve, 100));
-                              }
-                            }
-
-                            tryRemoveBuggyPart();
-                          },
-                        });
-                      } else {
-                        closeLoading();
-                        window.open(href, '_blank');
-                      }
-                    });
-                  } else {
-                    window.open(href, '_blank');
-                  }
+                  handleGitHubLink(href, { 
+                    uuid, 
+                    prefix,
+                    onUnknown: () => {
+                      // If not recognized, open in new tab
+                      window.open(href, '_blank');
+                    }
+                  });
                 } else {
                   // Not a GitHub URL, open in new tab
                   window.open(href, '_blank');
                 }
               }, { passive: false });
             });
-          }
+          }, { context: $parent });
         });
         isApplyingJS = false;
         return true;
