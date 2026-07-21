@@ -110,3 +110,26 @@ the number of users)
 - Reduced duplicated code across widgets (~300 lines removed), refactored
 - Better handling when GitHub changes their UI, refactored
 - Consistent error reporting for developers, refactored
+
+## 1.2.8
+
+- mount notification manager before boot so early toasts work
+- await container init before loading widgets; guard missing container storage
+- clearFeed uses transition timeout fallback so boot never hangs on fade CSS
+- GitHub UI change helper toasts with link to open a project issue (includes stack trace)
+- username resolves via PAT /user when DOM fallbacks fail
+- storage provider expiry keys and read path fixed; poll interval slowed to 30s
+- serial storage queue prevents read-modify-write races on containers
+- saveWidgetPosition merges existing widget config by UUID and debounces writes (lazy init fixes script load order)
+- error handler notifications include Open issue action with stack trace
+- skip PAT validation when empty; cache token validity for 5 minutes
+- general settings button retries header mount with fallbacks instead of silent skip
+- mount settings after feed swap; header MutationObserver re-mounts when GitHub navbar re-renders
+- mount settings after widget load (main); body MutationObserver + delayed re-check catches late header swaps
+- add missing `waitUntil` helper used by settings mount retries
+- todo widget uses `waitUntil` instead of broken `aad_repeatlyCall` for listener binding
+- widget picker images updated to official repo assets on GitHub
+- hide unhydrated GitHub list skeleton metadata in recent activity and entries widgets
+- issue/PR preview uses gh_v1 HTML when available; gh_v2 shows API comment loader
+- API-loaded comments render with GitHub timeline markup (avatar, header, markdown-body)
+- remove stuck PR merge box spinner from gh_v2 HTML previews

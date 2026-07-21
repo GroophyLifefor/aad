@@ -169,6 +169,31 @@ function generateUUID() {
 
 const aad_sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+async function waitUntil(callback, { tries = 10, delay = 100 } = {}) {
+  for (let i = 0; i < tries; i++) {
+    if (callback()) {
+      return true;
+    }
+    if (i < tries - 1) {
+      await aad_sleep(delay);
+    }
+  }
+  return false;
+}
+
+function waitForTransitionOrTimeout(el, ms = 600) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    el.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, ms);
+  });
+}
+
 var sha256 = function sha256(ascii) {
   function rightRotate(value, amount) {
     return (value >>> amount) | (value << (32 - amount));
@@ -290,7 +315,9 @@ function addWidget(index, widget, _config) {
 }
 
 
-function prepareUsername(_feed) {
+async function prepareUsername(_feed) {
+  console.log('[AAD username] prepareUsername start');
+
   function way1() {
     const _ = document.querySelectorAll(
       '#switch_dashboard_context_left_column-button > span > span > span'
@@ -298,9 +325,8 @@ function prepareUsername(_feed) {
     if (!!_) {
       GitHubUsername = _.innerText.trim();
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   function way2() {
@@ -310,9 +336,8 @@ function prepareUsername(_feed) {
     if (!!_) {
       GitHubUsername = _.getAttribute('content').trim();
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   function way3() {
@@ -320,9 +345,8 @@ function prepareUsername(_feed) {
     if (!!_) {
       GitHubUsername = _.getAttribute('content').trim();
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   function way4() {
@@ -332,34 +356,67 @@ function prepareUsername(_feed) {
     if (!!_) {
       GitHubUsername = _.getAttribute('data-login').trim();
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
+  const wayNames = ['way1-dashboard-button', 'way2-octolytics-meta', 'way3-user-login-meta', 'way4-nav-menu-button'];
   const ways = [way1, way2, way3, way4];
-  let found = false;
-  for (const way of ways) {
-    if (way()) {
-      found = true;
-      break;
+
+  for (let i = 0; i < ways.length; i++) {
+    if (ways[i]()) {
+      console.log('[AAD username] resolved via DOM', {
+        method: wayNames[i],
+        username: GitHubUsername,
+      });
+      preloadImage(`https://github.com/${GitHubUsername}.png`);
+      return true;
     }
-  }
-  if (!found) {
-    throw new Error('Cannot find GitHub username.');
+    console.log('[AAD username] DOM fallback missed', { method: wayNames[i] });
   }
 
-  preloadImage(`https://github.com/${GitHubUsername}.png`);
+  const pat = await getPatFromStorage();
+  if (pat && pat !== 'deny-all') {
+    console.log('[AAD username] trying PAT /user fallback');
+    try {
+      const response = await aad_fetch('https://api.github.com/user', {
+        headers: {
+          Authorization: `Bearer ${pat}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        GitHubUsername = data.login;
+        console.log('[AAD username] resolved via PAT /user', {
+          username: GitHubUsername,
+        });
+        preloadImage(`https://github.com/${GitHubUsername}.png`);
+        return true;
+      }
+      console.log('[AAD username] PAT /user failed', { status: response.status });
+    } catch (error) {
+      console.error('[AAD username] PAT /user error:', error);
+    }
+  } else {
+    console.log('[AAD username] skipping PAT fallback', {
+      hasPat: !!pat,
+      denyAll: pat === 'deny-all',
+    });
+  }
+
+  console.log('[AAD username] all methods failed, showing UI change toast');
+  requireGitHubElement('meta[name="user-login"]', document, 'prepareUsername');
+  return false;
 }
 
 function prepareUtils() {
   searchInModal();
 }
 
-function clearFeed() {
-  initContainers();
-  return new Promise((resolve) => {
-    addCustomCSS(`
+async function clearFeed() {
+  await initContainers();
+
+  addCustomCSS(`
         .fade-out {
           transition: opacity 0.3s 0.15s ease-out;
           animation: toDown 0.5s 0.15s ease-out;
@@ -398,50 +455,48 @@ function clearFeed() {
         }
       `);
 
-    const $link = document.querySelectorAll(
-      'header [href=\"https://github.com/\"]'
-    )[1];
-    const $span = $link.querySelector('span');
-    if ($span) {
-      $span.innerHTML = ` Dashboard <span class="ActionListItem-label color-fg-muted f6">(Click text to back default feed)</span>`;
-    }
+  const $link = document.querySelectorAll(
+    'header [href=\"https://github.com/\"]'
+  )[1];
+  const $span = $link?.querySelector('span');
+  if ($span) {
+    $span.innerHTML = ` Dashboard <span class="ActionListItem-label color-fg-muted f6">(Click text to back default feed)</span>`;
+  }
 
-    // Clear the feed (entire homepage without header)
-    const aside = document.querySelector('.application-main > div > aside');
-    if (aside) {
-      aside.style.display = 'none';
-    }
+  const aside = document.querySelector('.application-main > div > aside');
+  if (aside) {
+    aside.style.display = 'none';
+  }
 
-    getGeneralSettingsComp();
+  const _feed = requireGitHubElement(
+    '.application-main > div > div',
+    document,
+    'clearFeed feed root'
+  );
+  if (!_feed) {
+    onLoad();
+    return false;
+  }
 
-    const _feed = document.querySelector('.application-main > div > div');
-    _feed.style.width = '100%';
-    if (_feed) {
-      _feed.classList.remove('fade-out');
-      _feed.classList.add('fade-out');
+  _feed.style.width = '100%';
+  _feed.classList.remove('fade-out');
+  _feed.classList.add('fade-out');
 
-      _feed.addEventListener(
-        'transitionend',
-        function () {
-          prepareUtils();
-          prepareUsername(_feed);
-          const event = new CustomEvent('onAADLoaded', {});
-          document.dispatchEvent(event);
+  await waitForTransitionOrTimeout(_feed, 600);
 
-          onPageLoad();
+  prepareUtils();
+  await prepareUsername(_feed);
 
-          _feed.innerHTML = '';
-          _feed.classList.remove('fade-in');
-          _feed.classList.add('fade-in');
-          _feed.classList.remove('fade-out');
-          onLoad();
-          resolve(true);
-        },
-        { once: true }
-      );
-    } else {
-      onLoad();
-      resolve(false);
-    }
-  });
+  const event = new CustomEvent('onAADLoaded', {});
+  document.dispatchEvent(event);
+
+  onPageLoad();
+
+  _feed.innerHTML = '';
+  _feed.classList.remove('fade-in');
+  _feed.classList.add('fade-in');
+  _feed.classList.remove('fade-out');
+  onLoad();
+
+  return true;
 }

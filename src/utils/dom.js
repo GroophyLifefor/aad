@@ -254,3 +254,96 @@ function $remove(selector, options = {}) {
 function $removeAll(selector, options = {}) {
   withElements(selector, el => el.remove(), options);
 }
+
+/**
+ * Require a GitHub DOM element; toast + issue link when missing.
+ *
+ * @param {string} selector
+ * @param {Element|Document} [context=document]
+ * @param {string} [errorContext='']
+ * @returns {Element|null}
+ */
+function requireGitHubElement(selector, context = document, errorContext = '') {
+  const element = context.querySelector(selector);
+
+  if (element) {
+    return element;
+  }
+
+  const manifest = chrome.runtime.getManifest();
+  const stackTrace = new Error('GitHub UI element not found').stack || 'unavailable';
+  const issueBody = [
+    '## GitHub UI change',
+    '',
+    `Selector: \`${selector}\``,
+    `Context: ${errorContext}`,
+    `URL: ${window.location.href}`,
+    `UA: ${navigator.userAgent}`,
+    `AAD: ${manifest.version}`,
+    '',
+    '### Stack trace',
+    '```',
+    stackTrace,
+    '```',
+  ].join('\n');
+
+  sendNewNotification(
+    'GitHub UI changes detected. AAD could not find a required page element.',
+    {
+      type: 'error',
+      title: 'GitHub UI Changed',
+      timeout: 15000,
+      actions: [
+        {
+          text: 'Open issue',
+          type: 'success',
+          action: () => {
+            const params = new URLSearchParams({
+              title: '[Bug] GitHub UI changed',
+              body: issueBody,
+            });
+            window.open(
+              `https://github.com/GroophyLifefor/aad/issues/new?${params.toString()}`,
+              '_blank'
+            );
+          },
+        },
+      ],
+    }
+  );
+
+  return null;
+}
+
+/**
+ * Remove GitHub issue/PR list metadata that only hydrates on github.com.
+ * Scraped HTML keeps LoadingSkeleton placeholders forever in widgets.
+ *
+ * @param {Element} root
+ */
+function stripUnhydratedGitHubListMetadata(root) {
+  if (!root) return;
+
+  [
+    'list-row-comments',
+    'list-row-assigned-agents',
+    'list-row-assignees',
+  ].forEach((testId) => {
+    withElements(`[data-testid="${testId}"]`, (el) => el.remove(), { context: root });
+  });
+
+  withElements('[class*="LoadingSkeleton"]', (skeleton) => {
+    const rowMeta = skeleton.closest('[data-testid^="list-row-"]');
+    if (rowMeta) {
+      rowMeta.remove();
+      return;
+    }
+    skeleton.remove();
+  }, { context: root });
+
+  withElements('[class*="MetadataContainer-module"]', (container) => {
+    if (!container.children.length) {
+      container.remove();
+    }
+  }, { context: root });
+}

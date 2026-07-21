@@ -103,16 +103,32 @@ function fireError(message, data) {
   });
 
   setTimeout(() => {
+    const errorInfo = data.extra?.error || {};
+    const issueBody = [
+      '## AAD Error',
+      '',
+      `Message: ${message}`,
+      `Error: ${errorInfo.message || ''}`,
+      `URL: ${window.location.href}`,
+      `UA: ${navigator.userAgent}`,
+      `AAD: ${manifestData.version}`,
+      '',
+      '### Stack trace',
+      '```',
+      errorInfo.stack || 'unavailable',
+      '```',
+    ].join('\n');
+
     sendNewNotification(
       "Something went wrong, I'm so sorry for the inconvenience! If it's not too much trouble, could I possibly send the error log to the server so we can work together to find a solution?",
       {
         subData: {
           ...(data.extra || {}),
           appVersion: manifestData.version,
-          errorStack: data.extra.error.stack || '',
-          errorType: data.extra.error.type || '',
-          errorArguments: data.extra.error.arguments || '',
-          errorMessage: data.extra.error.message || '',
+          errorStack: errorInfo.stack || '',
+          errorType: errorInfo.type || '',
+          errorArguments: errorInfo.arguments || '',
+          errorMessage: errorInfo.message || '',
         },
         type: 'error',
         timeout: 12000,
@@ -122,6 +138,20 @@ function fireError(message, data) {
             text: 'No, thanks',
             type: 'default',
             action: () => {},
+          },
+          {
+            text: 'Open issue',
+            type: 'info',
+            action: () => {
+              const params = new URLSearchParams({
+                title: '[Bug] AAD error',
+                body: issueBody,
+              });
+              window.open(
+                `https://github.com/GroophyLifefor/aad/issues/new?${params.toString()}`,
+                '_blank'
+              );
+            },
           },
           {
             text: 'Send it',
@@ -140,10 +170,10 @@ function fireError(message, data) {
                       data: {
                         ...(data.extra || {}),
                         appVersion: manifestData.version,
-                        errorStack: data.extra.error.stack || '',
-                        errorType: data.extra.error.type || '',
-                        errorArguments: data.extra.error.arguments || '',
-                        errorMessage: data.extra.error.message || '',
+                        errorStack: errorInfo.stack || '',
+                        errorType: errorInfo.type || '',
+                        errorArguments: errorInfo.arguments || '',
+                        errorMessage: errorInfo.message || '',
                       },
                     }),
                   }

@@ -3,7 +3,17 @@ function setWidgetLgCount(c) {
   applyWidgetResponsibility();
 }
 
-function getGeneralSettingsComp() {
+let settingsButtonEl = null;
+let settingsCssAdded = false;
+let settingsDomWatcher = null;
+let settingsRemounting = false;
+
+function ensureSettingsCss() {
+  if (settingsCssAdded) {
+    return;
+  }
+  settingsCssAdded = true;
+
   addCustomCSS(`
     .widget-container-manager { 
       width: 32px;
@@ -25,9 +35,17 @@ function getGeneralSettingsComp() {
       color: ${getColor('settings.icon.iconFill')};
     }
   `);
+}
+
+function createSettingsButtonEl() {
+  if (settingsButtonEl) {
+    return settingsButtonEl;
+  }
+
+  ensureSettingsCss();
 
   const refs = {};
-  const html = render(
+  settingsButtonEl = render(
     refs,
     `
     <div ref="settings" aad-settings="true" class="widget-container-manager" ref="container">
@@ -41,30 +59,8 @@ function getGeneralSettingsComp() {
   refs.settings.addEventListener('click', () => {
     createModal(
       'Advanced Settings',
-      {
-        // maxWidth: 'none',
-        // maxHeight: 'none',
-      },
-      ({ closeModal }) => {
-        // const uuid = generateUUID();
-        // const prefix = prefixer('advanced-settings', uuid, 'component');
-
-        // const advancedSettingRefs = {};
-        // const advancedSettingHTML = render(
-        //   advancedSettingRefs,
-        //   `
-        //   <div ref="${prefix(
-        //     'container'
-        //   )}" style="width: calc(100dvw - 48px); height: calc(100dvh - 80px);">
-        //     Work in progress
-        //   </div>
-        //   `
-        // );
-        // return advancedSettingHTML;
-
-        // return getAdvancedSettings().node;
-        return getNewSettings().node;
-      },
+      {},
+      () => getNewSettings().node,
     );
     return;
     let _widgets = widgetResponsibility.breaks;
@@ -85,41 +81,12 @@ function getGeneralSettingsComp() {
           type: 'wide-button',
           text: 'Open advanced settings (Work In Progress)',
           onClick: (props) => {
-            // /* Video DEMO START */
-            // setTimeout(() => {
-            //   startConference();
-            // }, 1000);
-            // return;
-            // /* Video DEMO END */
-
             props.closeModal();
 
             createModal(
               'Advanced Settings',
-              {
-                // maxWidth: 'none',
-                // maxHeight: 'none',
-              },
-              ({ closeModal }) => {
-                // const uuid = generateUUID();
-                // const prefix = prefixer('advanced-settings', uuid, 'component');
-
-                // const advancedSettingRefs = {};
-                // const advancedSettingHTML = render(
-                //   advancedSettingRefs,
-                //   `
-                //   <div ref="${prefix(
-                //     'container'
-                //   )}" style="width: calc(100dvw - 48px); height: calc(100dvh - 80px);">
-                //     Work in progress
-                //   </div>
-                //   `
-                // );
-                // return advancedSettingHTML;
-
-                // return getAdvancedSettings().node;
-                return getNewSettings().node;
-              },
+              {},
+              () => getNewSettings().node,
             );
           },
         },
@@ -226,19 +193,140 @@ function getGeneralSettingsComp() {
     );
   });
 
-  // const input = refs.input;
-  // input.addEventListener('change', (e) => {
-  //   setWidgetLgCount(e.target.value);
-  // });
+  return settingsButtonEl;
+}
 
-  // Use safe DOM utilities - GitHub UI may change
-  const userProfileImage = $('header [data-component="Avatar"]');
-  const userProfile = $parent(userProfileImage);
-  const userProfileParent = $parent(userProfile);
-  const profileBars = $parent(userProfileParent);
+async function remountSettingsButtonIfMissing() {
+  if (!settingsButtonEl || document.body.contains(settingsButtonEl)) {
+    return true;
+  }
+  if (settingsRemounting) {
+    return false;
+  }
+
+  settingsRemounting = true;
+  // console.log('[AAD settings] button missing from DOM, re-mounting');
+
+  try {
+    const remounted = await waitUntil(
+      () => mountGeneralSettingsButton(settingsButtonEl),
+      { tries: 30, delay: 100 },
+    );
+
+    // if (remounted) {
+    //   console.log('[AAD settings] re-mount succeeded');
+    // } else {
+    //   console.log('[AAD settings] re-mount failed after retries');
+    // }
+
+    return remounted;
+  } finally {
+    settingsRemounting = false;
+  }
+}
+
+const scheduleSettingsRemount = aad_debounce(() => {
+  void remountSettingsButtonIfMissing();
+}, 100);
+
+function ensureSettingsDomWatcher() {
+  if (settingsDomWatcher || !document.body) {
+    return true;
+  }
+
+  settingsDomWatcher = new MutationObserver(() => {
+    if (!settingsButtonEl || document.body.contains(settingsButtonEl)) {
+      return;
+    }
+    // console.log('[AAD settings] dom watcher detected missing button');
+    scheduleSettingsRemount();
+  });
+  settingsDomWatcher.observe(document.body, { childList: true, subtree: true });
+  // console.log('[AAD settings] dom watcher started on body');
+  return true;
+}
+
+function mountGeneralSettingsButton(html) {
+  if (document.querySelector('[aad-settings="true"]')) {
+    // console.log('[AAD settings] already mounted, skipping');
+    return true;
+  }
+
+  const userProfileImage = document.querySelector('header [data-component="Avatar"]');
+  const userProfile = userProfileImage?.parentNode;
+  const userProfileParent = userProfile?.parentNode;
+  const profileBars = userProfileParent?.parentNode;
 
   if (userProfileParent && profileBars) {
     profileBars.insertBefore(html, userProfileParent);
+    // console.log('[AAD settings] mounted via avatar-chain');
+    return true;
   }
-  // Silently skip if elements not found - GitHub UI may have changed
+
+  const actions = document.querySelector('.AppHeader-actions');
+  if (actions) {
+    actions.insertBefore(html, actions.firstChild);
+    // console.log('[AAD settings] mounted via app-header-actions');
+    return true;
+  }
+
+  const notificationsButton = document.getElementById('AppHeader-notifications-button');
+  if (notificationsButton?.parentNode) {
+    notificationsButton.parentNode.insertBefore(html, notificationsButton);
+    // console.log('[AAD settings] mounted via before-notifications');
+    return true;
+  }
+
+  // console.log('[AAD settings] mount attempt failed', {
+  //   hasAvatar: !!userProfileImage,
+  //   hasActions: !!actions,
+  //   hasNotificationsButton: !!notificationsButton,
+  // });
+  return false;
+}
+
+async function getGeneralSettingsComp() {
+  // console.log('[AAD settings] getGeneralSettingsComp start');
+
+  await waitUntil(() => ensureSettingsDomWatcher(), { tries: 20, delay: 100 });
+
+  if (document.querySelector('[aad-settings="true"]')) {
+    // console.log('[AAD settings] button already in DOM, done');
+    return true;
+  }
+
+  const html = createSettingsButtonEl();
+
+  // console.log('[AAD settings] waiting for header mount point...');
+  const mounted = await waitUntil(() => mountGeneralSettingsButton(html), {
+    tries: 30,
+    delay: 100,
+  });
+
+  // if (mounted) {
+  //   console.log('[AAD settings] mount succeeded');
+  // } else {
+  //   console.log('[AAD settings] mount failed after retries, showing UI change toast');
+  // }
+  if (!mounted) {
+    requireGitHubElement(
+      'header [data-component="Avatar"]',
+      document,
+      'generalSettings mount'
+    );
+  }
+
+  return mounted;
+}
+
+async function stabilizeSettingsButton() {
+  await getGeneralSettingsComp();
+
+  for (const delay of [400, 900, 1800]) {
+    await aad_sleep(delay);
+    if (!document.querySelector('[aad-settings="true"]')) {
+      // console.log(`[AAD settings] missing after +${delay}ms, re-checking`);
+      await remountSettingsButtonIfMissing();
+    }
+  }
 }

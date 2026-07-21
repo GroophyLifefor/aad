@@ -9,6 +9,30 @@ const tokens = {
   },
 };
 
+const PAT_VALIDITY_TTL_MS = 5 * 60 * 1000;
+let patCache = { token: null, valid: false, checkedAt: 0 };
+
+function invalidatePatCache() {
+  patCache = { token: null, valid: false, checkedAt: 0 };
+}
+
+async function checkIsValidTokenCached(token) {
+  if (!token) {
+    return false;
+  }
+
+  if (
+    patCache.token === token &&
+    Date.now() - patCache.checkedAt < PAT_VALIDITY_TTL_MS
+  ) {
+    return patCache.valid;
+  }
+
+  const valid = await checkIsValidToken(token);
+  patCache = { token, valid, checkedAt: Date.now() };
+  return valid;
+}
+
 async function APIRequest(url, options = {}) {
   const defaultHeaders = {
     'Content-Type': 'application/json',
@@ -21,15 +45,15 @@ async function APIRequest(url, options = {}) {
     return {
       status: 403,
       json: () => ({ status: 403, data: 'Access denied.' }),
-    }; 
+    };
   }
-
-  const isValidToken = await checkIsValidToken(pat);
 
   options.headers = {
     ...defaultHeaders,
     ...options.headers,
   };
+
+  const isValidToken = pat ? await checkIsValidTokenCached(pat) : false;
 
   if (pat && isValidToken) {
     options.headers['Authorization'] = `token ${pat}`;
@@ -87,6 +111,7 @@ function setPatToStorage(pat) {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
+        invalidatePatCache();
         sendNewNotification('PAT Token is updated.', {
           type: 'info',
           timeout: 5000,
@@ -108,9 +133,13 @@ function setPatToStorage(pat) {
 }
 
 async function checkIsValidToken(token) {
+  if (!token) {
+    return false;
+  }
+
   const fetched = await aad_fetch('https://api.github.com/user', {
     headers: {
-      Authorization: `token ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
   return fetched.status === 200;

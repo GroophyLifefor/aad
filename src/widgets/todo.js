@@ -624,75 +624,77 @@ function getTodoWidget(uuid) {
     setConfigByUUID(uuid, { public: { todos: newTodos } });
   }
 
-  function applyJS() {
+  function bindTodoWidgetListeners() {
+    const container = refs.container || document.querySelector(
+      `.${prefix('container')}`
+    );
+    if (!container) return false;
+
+    todos.forEach((todo) => {
+      const todoUuid = todo.uuid;
+      if (todo.isCompleted) return;
+      const $parent = container.querySelector(`div[todo-uuid="${todoUuid}"]`);
+      if (!$parent) return;
+      const $checkbox = $parent.querySelector('input[type="checkbox"]');
+      if (!$checkbox || $checkbox.dataset.listenerAdded) return;
+      $checkbox.dataset.listenerAdded = 'true';
+
+      $checkbox.addEventListener('change', (e) => {
+        const updatedTodos = todos.map((t) => {
+          if (t.uuid === todoUuid) {
+            return { ...t, isCompleted: $checkbox.checked };
+          }
+          return t;
+        });
+        todos = updatedTodos;
+        setConfigByUUID(uuid, { public: { todos: updatedTodos } });
+      });
+
+      // Handle description links using centralized GitHub link handler
+      withElement(`.${prefix('description')}`, ($description) => {
+        const links = $description.querySelectorAll('a');
+        links.forEach((link) => {
+          if (link.dataset.listenerAdded) return;
+          link.dataset.listenerAdded = 'true';
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const href = link.getAttribute('href')?.trim();
+            if (!href) return;
+
+            // Check if it's a GitHub URL
+            if (href.includes('github.com')) {
+              handleGitHubLink(href, { 
+                uuid, 
+                prefix,
+                onUnknown: () => {
+                  // If not recognized, open in new tab
+                  window.open(href, '_blank');
+                }
+              });
+            } else {
+              // Not a GitHub URL, open in new tab
+              window.open(href, '_blank');
+            }
+          }, { passive: false });
+        });
+      }, { context: $parent });
+    });
+
+    return true;
+  }
+
+  async function applyJS() {
     if (isApplyingJS) return;
     isApplyingJS = true;
 
-    aad_repeatlyCall(
-      () => {
-        const container = refs.container || document.querySelector(
-          `.${prefix('container')}`
-        );
-        if (!container) return false;
-
-        todos.forEach((todo) => {
-          const todoUuid = todo.uuid;
-          if (todo.isCompleted) return;
-          const $parent = container.querySelector(`div[todo-uuid="${todoUuid}"]`);
-          if (!$parent) return;
-          const $checkbox = $parent.querySelector('input[type="checkbox"]');
-          if (!$checkbox || $checkbox.dataset.listenerAdded) return;
-          $checkbox.dataset.listenerAdded = 'true';
-
-          $checkbox.addEventListener('change', (e) => {
-            const updatedTodos = todos.map((t) => {
-              if (t.uuid === todoUuid) {
-                return { ...t, isCompleted: $checkbox.checked };
-              }
-              return t;
-            });
-            todos = updatedTodos;
-            setConfigByUUID(uuid, { public: { todos: updatedTodos } });
-          });
-
-          // Handle description links using centralized GitHub link handler
-          withElement(`.${prefix('description')}`, ($description) => {
-            const links = $description.querySelectorAll('a');
-            links.forEach((link) => {
-              if (link.dataset.listenerAdded) return;
-              link.dataset.listenerAdded = 'true';
-              link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const href = link.getAttribute('href')?.trim();
-                if (!href) return;
-
-                // Check if it's a GitHub URL
-                if (href.includes('github.com')) {
-                  handleGitHubLink(href, { 
-                    uuid, 
-                    prefix,
-                    onUnknown: () => {
-                      // If not recognized, open in new tab
-                      window.open(href, '_blank');
-                    }
-                  });
-                } else {
-                  // Not a GitHub URL, open in new tab
-                  window.open(href, '_blank');
-                }
-              }, { passive: false });
-            });
-          }, { context: $parent });
-        });
-        isApplyingJS = false;
-        return true;
-      },
-      {
-        times: 10,  
-        start_ms: 100,
-        type: 'exponentially',
-      }
-    );
+    try {
+      await waitUntil(() => bindTodoWidgetListeners(), {
+        tries: 10,
+        delay: 100,
+      });
+    } finally {
+      isApplyingJS = false;
+    }
   }
 
   function execute() {

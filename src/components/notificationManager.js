@@ -9,6 +9,21 @@ const notifications = {
   data: [],
 };
 
+let notificationManagerMounted = false;
+const pendingNotifications = [];
+
+function dispatchNotificationEvent(inner, config, uuid) {
+  document.dispatchEvent(
+    new CustomEvent('onNewNotification', {
+      detail: {
+        inner: inner.replaceAll('\n', '<br />'),
+        config,
+        uuid,
+      },
+    })
+  );
+}
+
 /**
  * Sends a new notification event and returns a unique identifier for the notification.
  *
@@ -27,16 +42,27 @@ const notifications = {
  */
 function sendNewNotification(inner, config) {
   const uuid = generateUUID();
-  const event = new CustomEvent('onNewNotification', {
-    detail: {
-      inner: inner.replaceAll('\n', '<br />'),
-      config,
-      uuid,
-    },
-  });
   notifications.data.push({ inner, config, uuid, date: Date.now() });
-  document.dispatchEvent(event);
+
+  if (!notificationManagerMounted) {
+    pendingNotifications.push({ inner, config, uuid });
+    return uuid;
+  }
+
+  dispatchNotificationEvent(inner, config, uuid);
   return uuid;
+}
+
+function mountNotificationManager() {
+  if (notificationManagerMounted) return;
+
+  const manager = getNotificationManager();
+  document.body.aadAppendChild(manager);
+  notificationManagerMounted = true;
+
+  pendingNotifications.splice(0).forEach(({ inner, config, uuid }) => {
+    dispatchNotificationEvent(inner, config, uuid);
+  });
 }
 
 function removeNotification(uuid) {

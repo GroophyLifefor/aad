@@ -1,22 +1,24 @@
 let regularProcesses = [];
 
-async function loadRegularSaveProcess(title, expirationMS, getValueFunction) {
+async function loadRegularSaveProcess(title, ttlMS, getValueFunction) {
   const regularProcess = {
     title,
-    expireDate: expirationMS,
+    ttlMS,
+    expireAt: Date.now() + ttlMS,
     getValueFunction,
   };
   regularProcesses.push(regularProcess);
 
-  const value = await getRegularProcessFromStorage(title);
-  if (value) {
-    regularProcess.value = value.value;
+  const stored = await getRegularProcessFromStorage(title);
+  if (stored?.value != null) {
+    regularProcess.value = stored.value;
+    regularProcess.expireAt = stored.expireDate ?? regularProcess.expireAt;
   } else {
     regularProcess.value = await getValueFunction();
     await globalSave('regular_process-' + title, {
       title,
       value: regularProcess.value,
-      expireDate: Date.now() + expirationMS,
+      expireDate: regularProcess.expireAt,
     });
   }
 }
@@ -25,30 +27,33 @@ async function loadRegularSaveProcess(title, expirationMS, getValueFunction) {
   async function checkExpiredRegularProcesses() {
     const _regularProcesses = await getRegularProcessesFromStorage();
     const now = Date.now();
-    for (const title of _regularProcesses) {
-      const realTitle = title.replace('regular_process-', '');
-      const regularProcess = regularProcesses.filter((rp) => rp.title === realTitle)[0];
-  
+
+    for (const storageKey of _regularProcesses) {
+      const realTitle = storageKey.replace('regular_process-', '');
+      const regularProcess = regularProcesses.find((rp) => rp.title === realTitle);
+
       if (!regularProcess) {
         regularProcesses = regularProcesses.filter((rp) => rp.title !== realTitle);
-        removeRegularProcessFromStorage(realTitle);
+        await removeRegularProcessFromStorage(realTitle);
         console.log('Regular process not found, removing from storage:', realTitle);
         continue;
       }
-  
-      if (regularProcess.expireDate < now) {
+
+      if (regularProcess.expireAt < now) {
         const value = await regularProcess.getValueFunction();
+        regularProcess.value = value;
+        regularProcess.expireAt = now + regularProcess.ttlMS;
         console.log('Regular process expired, updating value:', realTitle, value);
         await globalSave('regular_process-' + realTitle, {
-          realTitle,
+          title: realTitle,
           value,
-          expireDate: now + regularProcess.expirationMS,
+          expireDate: regularProcess.expireAt,
         });
       }
     }
   }
 
-  setInterval(checkExpiredRegularProcesses, 1000);
+  setInterval(checkExpiredRegularProcesses, 30000);
 })();
 
 async function getRegularProcessesFromStorage() {
@@ -57,10 +62,10 @@ async function getRegularProcessesFromStorage() {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
-        const regularProcesses = Object.keys(items).filter((key) =>
+        const processKeys = Object.keys(items).filter((key) =>
           key.startsWith('regular_process-')
         );
-        resolve(regularProcesses);
+        resolve(processKeys);
       }
     });
   });
@@ -68,7 +73,7 @@ async function getRegularProcessesFromStorage() {
 
 async function removeRegularProcessFromStorage(title) {
   return new Promise((resolve, reject) => {
-    chrome.storage.local.remove(['regular_process-' + title], (items) => {
+    chrome.storage.local.remove(['regular_process-' + title], () => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
@@ -84,23 +89,27 @@ async function getRegularProcessFromStorage(title) {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
-        resolve(items[title]);
+        resolve(items['regular_process-' + title] ?? null);
       }
     });
   });
 }
 
 async function globalSave(title, value) {
-  chrome.storage.local.set({ [title]: value }, () => {
-    if (chrome.runtime.lastError) {
-      console.error(chrome.runtime.lastError);
-    }
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.set({ [title]: value }, () => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve();
+      }
+    });
   });
 }
 
 async function getFromRegularProcessStorage(title) {
   const value = await getRegularProcessFromStorage(title);
-  return value.value;
+  return value?.value ?? null;
 }
 
 // loadRegularSaveProcess('timestamp', 1000 /* every second */, Date.now);

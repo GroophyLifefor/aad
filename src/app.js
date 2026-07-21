@@ -34,15 +34,16 @@ function reloadWidgets() {
 }
 
 function loadWidgets() {
-  chrome.storage.local.get(['containers'], (items) => {
-    for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {
-      const container = items.containers[i];
-      if (!container) {
-        continue;
-      }
+  const containers = aad_containers || [];
 
-      const widgets = container.widgets || [];
-      for (let j = 0; j < widgets.length; j++) {
+  for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {
+    const container = containers[i];
+    if (!container) {
+      continue;
+    }
+
+    const widgets = container.widgets || [];
+    for (let j = 0; j < widgets.length; j++) {
         const widget = widgets[j];
         const widgetUUID = widget.uuid;
         const widgetFunc = widgetReferences[widget.type].fn;
@@ -102,7 +103,6 @@ function loadWidgets() {
         window.location.reload();
       }, 1000);
     }
-  });
 
   const isOnAADLoadedMessage = localStorage.getItem("onAADLoadedMessage");
   if (isOnAADLoadedMessage) {
@@ -182,12 +182,11 @@ async function main() {
 
   const widgetContainer = getWidgetContainer();
   const remainingTokens = getRemainingTokens();
-  const notificationManager = getNotificationManager();
 
   _feed.aadAppendChild(remainingTokens, true);
-  document.body.aadAppendChild(notificationManager);
   _feed.aadAppendChild(widgetContainer);
 
+  await initContainers();
   loadWidgets();
   printContainers();
 
@@ -195,12 +194,15 @@ async function main() {
 }
 
 if (aad_site_url === 'https://github.com/' /* Just Homepage */) {
-  /* */
+  mountNotificationManager();
+
   try {
-    clearFeed().then((cleared) => {
+    clearFeed().then(async (cleared) => {
       if (cleared) {
         try {
-          main();
+          await main();
+          // console.log('[AAD settings] post-main mount');
+          await stabilizeSettingsButton();
         } catch (e) {
           console.error('AAD - There was an error in Main', e);
           throw e;

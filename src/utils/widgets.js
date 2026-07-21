@@ -13,40 +13,40 @@ function loadNewWidget(name, fn, editModal) {
   }
 }
 
+const WIDGET_IMAGE_BASE =
+  'https://raw.githubusercontent.com/GroophyLifefor/aad/refs/heads/main/images';
+
 const addingWidgets = [
   {
     name: 'Trending',
     validName: 'trending',
-    image: 'https://github.githubassets.com/assets/social-2deb6d7d43e7.jpg',
+    image: `${WIDGET_IMAGE_BASE}/Trending.png`,
     description: 'Shows Trending repositories on GitHub',
   },
   {
     name: 'Profile',
     validName: 'profile',
-    image: 'https://blog.boot.dev/img/800/github.webp',
+    image: `${WIDGET_IMAGE_BASE}/Profile.png`,
     description: "It's very satisfying to see yourself, isn't it?",
   },
   {
     name: 'Entries',
     validName: 'entries',
-    image:
-      'https://aad.yelix.cloud/widgets/entries.png',
+    image: `${WIDGET_IMAGE_BASE}/Entries.png`,
     description:
       "If you're too busy with work, this is for you, freely manage and track issues and pull-requests.",
   },
   {
     name: 'ToDo List',
     validName: 'todo',
-    image:
-      'https://png.pngtree.com/thumb_back/fw800/background/20221206/pngtree-minimalist-todo-list-on-blue-with-coffee-and-notebook-photo-image_42011582.jpg',
+    image: `${WIDGET_IMAGE_BASE}/TODO.png`,
     description:
       "You're not the only one with forgetfulness, we can make some sacrifices.",
   },
   {
     name: 'Recent Activities',
     validName: 'recentActivity',
-    image:
-      'https://www.laurencegellert.com/content/uploads/2015/05/github_contributions.png',
+    image: `${WIDGET_IMAGE_BASE}/Recent%20Activities.png`,
     description:
       'It is always better to live without forgetting what you did one step before.',
   },
@@ -80,36 +80,49 @@ function getWidgetByUUID(uuid) {
 }
 
 function setConfigByUUID(uuid, config) {
-  const widget = getWidgetByUUID(uuid);
-  if (widget) {
-    aad_containers[widget.containerIndex].widgets[widget.widgetIndex].config =
-      Object.assign(
-        aad_containers[widget.containerIndex].widgets[widget.widgetIndex]
-          .config,
-        config
-      );
-  }
-  setContainers({ containers: aad_containers });
+  mutateContainers((containers) => {
+    for (let i = 0; i < containers.length; i++) {
+      const widgets = containers[i].widgets || [];
+      for (let j = 0; j < widgets.length; j++) {
+        if (widgets[j].uuid === uuid) {
+          widgets[j].config = Object.assign(widgets[j].config, config);
+          break;
+        }
+      }
+    }
+    return containers;
+  });
 }
 
-function saveWidgetPosition() {
-  function save() {
-    const containers = [];
+let debouncedSaveWidgetPosition = null;
+
+function runSaveWidgetPosition() {
+  mutateContainers((containers) => {
+    const configByUuid = {};
+    for (const container of containers) {
+      for (const widget of container.widgets || []) {
+        configByUuid[widget.uuid] = widget;
+      }
+    }
+
+    const nextContainers = [];
     let isItGoingWell = true;
+
     for (let i = 0; i < widgetResponsibility.totalWidgetCount; i++) {
-      const container = document.getElementById('container-' + i);
-      if (!container) {
+      const containerEl = document.getElementById('container-' + i);
+      if (!containerEl) {
         isItGoingWell = false;
         continue;
       }
-      const childs = Array.prototype.slice.call(container.children);
-      let widgets = [];
+
+      const childs = Array.prototype.slice.call(containerEl.children);
+      const widgets = [];
+
       for (let j = 0; j < childs.length; j++) {
         const child = childs[j];
-        const uuid = child.getAttribute('uuid');
-        const widget = getWidgetByUUID(uuid);
+        const childUuid = child.getAttribute('uuid');
+        const widget = configByUuid[childUuid];
         if (!widget) {
-          // may newWidget widget but if it will be null
           continue;
         }
         widgets.push({
@@ -118,31 +131,38 @@ function saveWidgetPosition() {
           config: widget.config,
         });
       }
-      containers.push({
+
+      nextContainers.push({
         index: i,
-        widgets: widgets,
+        widgets,
       });
     }
-    if (isItGoingWell) setContainers({ containers: containers });
-  }
 
-  save();
-  setTimeout(() => {
-    save();
-  }, 300);
+    return isItGoingWell ? nextContainers : containers;
+  });
+}
+
+function saveWidgetPosition() {
+  if (!debouncedSaveWidgetPosition) {
+    debouncedSaveWidgetPosition = aad_debounce(runSaveWidgetPosition, 300);
+  }
+  debouncedSaveWidgetPosition();
 }
 
 function createNewWidget(containerIndex, type) {
-  const widgetUUID = generateUUID();
-  const containers = aad_containers;
-  containers[containerIndex].widgets.push({
-    type,
-    uuid: widgetUUID,
-    config: {
-      public: {},
-      private: {},
-      editModal: {},
-    },
+  mutateContainers((containers) => {
+    if (!containers[containerIndex]) {
+      return containers;
+    }
+    containers[containerIndex].widgets.push({
+      type,
+      uuid: generateUUID(),
+      config: {
+        public: {},
+        private: {},
+        editModal: {},
+      },
+    });
+    return containers;
   });
-  setContainers({ containers });
 }

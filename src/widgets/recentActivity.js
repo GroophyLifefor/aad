@@ -172,6 +172,8 @@ function getRecentActivityWidget(uuid) {
           list.appendChild(childs[i].cloneNode(true));
         }
 
+        stripUnhydratedGitHubListMetadata(list);
+
         refs.container.innerHTML = '';
 
         const loadMoreButtonRefs = {};

@@ -75,6 +75,13 @@ async function createFrameModal(props) {
              gap: 8px;
              padding: 8px;
              border-radius: 8px;
+             overflow-x: auto;
+             max-width: 100%;
+           }
+
+           .${props.prefix}-preview-content {
+             overflow-x: auto;
+             max-width: 100%;
            }
 
            .${props.prefix}-preview main {
@@ -116,7 +123,7 @@ async function createFrameModal(props) {
                  Open in new tab
                </span>
              </a>
-             <div ref="inner">
+             <div ref="inner" class="${props.prefix}-preview-content">
 
              </div>
            </div>

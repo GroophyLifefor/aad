@@ -345,6 +345,8 @@ function getTrendingWidget(uuid) {
           list.appendChild(childs[i]);
         }
 
+        stripUnhydratedGitHubListMetadata(list);
+
         refs.container.innerHTML = '';
 
         const loadMoreButtonRefs = {};
