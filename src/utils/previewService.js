@@ -15,7 +15,12 @@ const GITHUB_SELECTORS = {
   repository: '#js-repo-pjax-container',
   user: 'main',
   repositoriesTab: 'main .Layout-main',
-  notifications: '.js-check-all-container, .notifications-list',
+  notificationsList: [
+    'main#js-repo-pjax-container .notifications-list.js-notifications-list',
+    '.notifications-list.js-notifications-list',
+    '.js-notifications-list',
+    '.notifications-list',
+  ],
 };
 
 /**
@@ -624,7 +629,13 @@ function openNotificationsPreview(url, { uuid, prefix, onComplete }) {
   createFrameModal({
     title: 'GitHub Notifications Preview',
     url: url,
-    selector: (doc) => $(GITHUB_SELECTORS.notifications, { context: doc }),
+    selector: (doc) => {
+      for (const sel of GITHUB_SELECTORS.notificationsList) {
+        const el = $(sel, { context: doc });
+        if (el) return el;
+      }
+      return null;
+    },
     prefix: prefixStr,
     onLoaded: (dom) => {
       if (dom) {

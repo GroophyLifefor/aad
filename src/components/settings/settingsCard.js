@@ -30,6 +30,32 @@ function settingsCard(config, properties, values, onChangesSaved) {
 
   const typeTEXT = (property) => {
     const refs = {};
+    const value = getValue(property.field) || '';
+
+    if (property.readonly) {
+      const display =
+        value ||
+        `<span class="color-fg-muted">${property.placeholder || '—'}</span>`;
+      const body =
+        value && /^https?:\/\//.test(value)
+          ? `<a href="${value}" target="_blank" rel="noopener noreferrer" class="Link--secondary" style="word-break: break-all;">${value}</a>`
+          : value
+            ? `<span class="Link--secondary" style="word-break: break-all;">${value}</span>`
+            : display;
+
+      return render(
+        null,
+        `
+        <div class="form-group mt-0 mb-3">
+          <div class="mb-2">
+            <label>${property.label}</label>
+          </div>
+          <div>${body}</div>
+        </div>
+        `
+      );
+    }
+
     const html = render(
       refs,
       `
@@ -39,14 +65,14 @@ function settingsCard(config, properties, values, onChangesSaved) {
         </div>
         <input ref="input" type="text" id="repo_description" class="form-control input-contrast width-full" name="repo_description" placeholder="${
           property.placeholder || ''
-        }" autofocus="" value="${
-        getValue(property.field) || ''
-      }" data-input-max-length="350">
+        }" autofocus="" data-input-max-length="350">
         <div ref="subFields" style="margin-left: 16px;margin-top: 4px;display:flex;flex-direction:column;">
         </div>
         </div>
       `
     );
+
+    refs.input.value = value;
 
     refs.input.addEventListener('input', () => {
       setValue(property.field, refs.input.value);

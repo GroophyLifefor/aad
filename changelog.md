@@ -133,3 +133,12 @@ the number of users)
 - issue/PR preview uses gh_v1 HTML when available; gh_v2 shows API comment loader
 - API-loaded comments render with GitHub timeline markup (avatar, header, markdown-body)
 - remove stuck PR merge box spinner from gh_v2 HTML previews
+
+## 1.2.9
+
+- quick look GitHub notifications: button selectors updated for new header IconButton; content selectors fall back through list variants
+- notifications quick look uses document capture click so GitHub navbar re-renders no longer drop the handler
+- general settings mount fallback finds `header a[href="/notifications"]` when old notifications button id is gone
+- toast bus renamed to `aad:new-notification` with detail guard so foreign `onNewNotification` events no longer crash AAD
+- entries widget settings show generated GitHub search URL (readonly; updates after save)
+- entries/recent activity: clone scraped `/issues` list DOM (`data-listview-component` / aria hooks) with page CSS; use `?type=pr` / `?type=issue` instead of search URLs

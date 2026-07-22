@@ -270,7 +270,10 @@ function mountGeneralSettingsButton(html) {
     return true;
   }
 
-  const notificationsButton = document.getElementById('AppHeader-notifications-button');
+  const notificationsButton =
+    document.getElementById('AppHeader-notifications-button') ||
+    document.querySelector('header a[href="/notifications"]') ||
+    document.querySelector('header a[href*="/notifications"]');
   if (notificationsButton?.parentNode) {
     notificationsButton.parentNode.insertBefore(html, notificationsButton);
     // console.log('[AAD settings] mounted via before-notifications');

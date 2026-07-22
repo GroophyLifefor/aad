@@ -12,12 +12,15 @@ const notifications = {
 let notificationManagerMounted = false;
 const pendingNotifications = [];
 
+// Namespaced — plain 'onNewNotification' collides with other page scripts
+const AAD_NEW_NOTIFICATION_EVENT = 'aad:new-notification';
+
 function dispatchNotificationEvent(inner, config, uuid) {
   document.dispatchEvent(
-    new CustomEvent('onNewNotification', {
+    new CustomEvent(AAD_NEW_NOTIFICATION_EVENT, {
       detail: {
-        inner: inner.replaceAll('\n', '<br />'),
-        config,
+        inner: String(inner ?? '').replaceAll('\n', '<br />'),
+        config: config || {},
         uuid,
       },
     })
@@ -29,7 +32,7 @@ function dispatchNotificationEvent(inner, config, uuid) {
  *
  * This function generates a unique identifier (UUID) for the notification, formats the 
  * inner text by replacing newlines with `<br />` tags, and creates a custom event named 
- * 'onNewNotification' with the notification details. The event is then dispatched to the 
+ * 'aad:new-notification' with the notification details. The event is then dispatched to the
  * document. Additionally, the notification data is pushed to a global `notifications` object.
  *
  * @param {string} inner - The inner content of the notification, which can include text or HTML.
@@ -129,7 +132,11 @@ function getNotificationManager() {
       `
   );
 
-  document.addEventListener('onNewNotification', (e) => {
+  document.addEventListener(AAD_NEW_NOTIFICATION_EVENT, (e) => {
+    if (!e.detail?.uuid) {
+      return;
+    }
+
     const defaultConfig = {
       type: 'default',
       timeout: null,
@@ -137,7 +144,7 @@ function getNotificationManager() {
       title: 'Notification',
     };
 
-    const config = { ...defaultConfig, ...e.detail.config };
+    const config = { ...defaultConfig, ...(e.detail.config || {}) };
 
     const notiUUID = e.detail.uuid;
     const pre = (title) => prefix(notiUUID + '-' + title);
@@ -345,19 +352,19 @@ function getNotificationManager() {
       removeNotificationByElement(notiRefs.notification, pre)
     );
 
-    if (!!e.detail.config.timeout) {
+    if (config.timeout) {
       setTimeout(() => {
         // if hovered wait mouseleave
         if (notiRefs.notification.matches(':hover')) {
           notiRefs.notification.addEventListener('mouseleave', () => {
             removeNotificationByElement(notiRefs.notification, pre);
-            e.detail.config.onTimeout?.();
+            config.onTimeout?.();
           });
         } else {
           removeNotificationByElement(notiRefs.notification, pre);
-          e.detail.config.onTimeout?.();
+          config.onTimeout?.();
         }
-      }, e.detail.config.timeout);
+      }, config.timeout);
     }
 
     refs.container.aadAppendChild(notification);

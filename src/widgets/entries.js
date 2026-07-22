@@ -1,4 +1,4 @@
-function getTrendingWidget(uuid) {
+function getEntriesWidget(uuid) {
   const defaultConfig = {
     author: GitHubUsername,
     openType: 'open',
@@ -83,8 +83,16 @@ function getTrendingWidget(uuid) {
   config.headerDescription = headerDescription;
   config.initialRenderCount = renderCount;
 
-  // init cache
-  setConfigByUUID(uuid, { public: config });
+  function persistGeneratedSearchUrl(searchUrl) {
+    config.generatedSearchUrl = searchUrl;
+    // Settings reads aad_containers synchronously; setConfigByUUID is async —
+    // patch memory now so the field is visible on next open.
+    const stored = getWidgetByUUID(uuid);
+    if (stored?.config?.public) {
+      stored.config.public.generatedSearchUrl = searchUrl;
+    }
+    setConfigByUUID(uuid, { public: config });
+  }
 
   function buildUrl() {
     const {
@@ -199,20 +207,34 @@ function getTrendingWidget(uuid) {
     };
 
     url = (page) => {
-      let temp = `https://github.com/issues?page=${page}&q=`;
-      temp += encodeURIComponent(' ' + authorConfig());
-      temp += encodeURIComponent(' ' + openTypeConfig[openType]);
-      temp += encodeURIComponent(' ' + entryTypeConfig[entryType]);
-      temp += encodeURIComponent(' ' + isArchivedConfig);
-      temp += encodeURIComponent(' ' + visibilityTypeConfig[visibilityType]);
-      temp += encodeURIComponent(' ' + onOrganizationConfig());
-      temp += encodeURIComponent(' ' + sortConfig[sort]);
-      temp += encodeURIComponent(' ' + labelsConfig());
-      temp += encodeURIComponent(' ' + assigneeConfig());
-      temp += encodeURIComponent(' ' + CIStatusConfig[CIStatus]);
-      temp += encodeURIComponent(' ' + reviewTypeConfig[reviewType]);
-      return temp;
+      const q = [
+        authorConfig(),
+        openTypeConfig[openType],
+        entryTypeConfig[entryType],
+        isArchivedConfig,
+        visibilityTypeConfig[visibilityType],
+        onOrganizationConfig(),
+        sortConfig[sort],
+        labelsConfig(),
+        assigneeConfig(),
+        CIStatusConfig[CIStatus],
+        reviewTypeConfig[reviewType],
+      ]
+        .filter((part) => !!(part || '').toString().trim())
+        .join(' ');
+
+      const params = new URLSearchParams();
+      params.set('page', String(page || 1));
+      if (entryType === 'pull-requests') {
+        params.set('type', 'pr');
+      } else if (entryType === 'issues') {
+        params.set('type', 'issue');
+      }
+      params.set('q', q);
+      return `https://github.com/issues?${params.toString()}`;
     };
+
+    persistGeneratedSearchUrl(url(1));
   }
 
   function startLoadingScreen() {
@@ -324,25 +346,18 @@ function getTrendingWidget(uuid) {
             display: flex-inline;
           }`);
 
-        doc.querySelectorAll('[rel="stylesheet"]').forEach((style) => {
-          document.head.appendChild(style);
-        });
+        applyScrapedGitHubAssets(doc);
 
         endLoadingScreen();
 
-        const _list = Array.from(doc.querySelectorAll('*')).filter((item) =>
-          item
-            .getAttribute('aria-labelledby')
-            ?.includes('list-view-container-title')
-        );
-        const listElement = _list?.[0] || null;
+        const listElement = findGitHubIssuesListElement(doc);
         const list = listElement?.cloneNode(true) || null;
-        const childs = listElement?.children || [];
+        const childs = Array.from(listElement?.children || []);
         if (!!list) list.innerHTML = '';
 
         for (let i = 0; i < renderCount; i++) {
           if (!childs[i]) break;
-          list.appendChild(childs[i]);
+          list.appendChild(childs[i].cloneNode(true));
         }
 
         stripUnhydratedGitHubListMetadata(list);
@@ -505,8 +520,15 @@ function getTrendingWidget(uuid) {
   };
 }
 
-loadNewWidget('entries', getTrendingWidget, {
+loadNewWidget('entries', getEntriesWidget, {
   properties: [
+    {
+      field: 'generatedSearchUrl',
+      type: 'text',
+      readonly: true,
+      label: 'Generated search URL (updates after save)',
+      placeholder: 'Save config to generate',
+    },
     {
       type: 'group',
       label: 'Header Content',

@@ -164,11 +164,6 @@
     return scoredData;
   }
 
-  chrome.storage.local.get(['collect_recommend'], (items) => {
-    // console.log('collect recommend raw', items.collect_recommend);
-    const currentTime = new Date();
-
-    const recommendedUrls = recommendUrls(items.collect_recommend, currentTime);
-    // console.log('collect recommend scored', recommendedUrls);
-  });
+  // Scoring is unused by the product (no UI/consumer). Keep helpers above for later;
+  // do not call recommendUrls on missing storage — that threw on .map.
 })();

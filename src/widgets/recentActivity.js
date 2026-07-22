@@ -148,18 +148,11 @@ function getRecentActivityWidget(uuid) {
             display: flex-inline;
           }`);
 
-        doc.querySelectorAll('[rel="stylesheet"]').forEach((style) => {
-          document.head.appendChild(style);
-        });
+        applyScrapedGitHubAssets(doc);
 
         endLoadingScreen();
 
-        const _list = Array.from(doc.querySelectorAll('*')).filter((item) =>
-          item
-            .getAttribute('aria-labelledby')
-            ?.includes('list-view-container-title')
-        );
-        const listElement = _list?.[0] || null;
+        const listElement = findGitHubIssuesListElement(doc);
         const list = listElement?.cloneNode(true) || null;
         // Convert to array to avoid live collection issues when appending
         const childs = Array.from(listElement?.children || []);

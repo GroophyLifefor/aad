@@ -347,3 +347,62 @@ function stripUnhydratedGitHubListMetadata(root) {
     }
   }, { context: root });
 }
+
+/**
+ * Find GitHub issues/PR list root in scraped HTML (new ListView + legacy).
+ * Prefer stable data-* / aria hooks — CSS-module class hashes change.
+ *
+ * @param {Document|Element} doc
+ * @returns {Element|null}
+ */
+function findGitHubIssuesListElement(doc) {
+  const selectors = [
+    'ul[data-listview-component="items-list"]',
+    '[data-listview-component="items-list"]',
+    '[aria-labelledby*="list-view-container-title"]',
+  ];
+
+  for (const sel of selectors) {
+    const el = doc.querySelector(sel);
+    if (el) return el;
+  }
+
+  return (
+    Array.from(doc.querySelectorAll('[aria-labelledby]')).find((item) =>
+      item
+        .getAttribute('aria-labelledby')
+        ?.includes('list-view-container-title')
+    ) || null
+  );
+}
+
+/**
+ * Apply stylesheets/styles from a scraped GitHub document so cloned list markup
+ * keeps page look (CSS modules, primer, etc.).
+ *
+ * @param {Document} doc
+ */
+function applyScrapedGitHubAssets(doc) {
+  doc.querySelectorAll('link[rel="stylesheet"]').forEach((link) => {
+    const href = link.getAttribute('href');
+    if (!href) return;
+    if (document.querySelector(`link[data-aad-scraped-href="${href}"]`)) {
+      return;
+    }
+    const el = document.createElement('link');
+    el.rel = 'stylesheet';
+    el.href = href;
+    el.setAttribute('crossorigin', 'anonymous');
+    el.setAttribute('data-aad-scraped-href', href);
+    document.head.appendChild(el);
+  });
+
+  doc.querySelectorAll('style').forEach((style) => {
+    const css = style.textContent || '';
+    if (!css.trim()) return;
+    const el = document.createElement('style');
+    el.setAttribute('data-aad-scraped-style', 'true');
+    el.textContent = css;
+    document.head.appendChild(el);
+  });
+}

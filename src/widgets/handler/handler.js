@@ -146,6 +146,9 @@ function createWidget(inner, config) {
       (newConfig) => {
         const properties = widgetReferences[config.type].editModal?.properties;
         function proc(property) {
+          if (property.readonly) {
+            return;
+          }
           if (
             ['text', 'github_user', 'select', 'number'].includes(property.type)
           ) {
@@ -161,6 +164,8 @@ function createWidget(inner, config) {
         properties?.forEach((property) => {
           proc(property);
         });
+        // Rebuild derived fields (e.g. generatedSearchUrl) before persist
+        config.onConfigChanged?.();
         setConfigByUUID(widgetId, widget.config);
         sendNewNotification('Widget config has been saved.', {
           type: 'success',
@@ -176,7 +181,6 @@ function createWidget(inner, config) {
             },
           ],
         });
-        config.onConfigChanged?.();
       }
     );
   });
