@@ -235,6 +235,23 @@ function getEntriesWidget(uuid) {
     };
 
     persistGeneratedSearchUrl(url(1));
+    console.log('[AAD entries] Search URL built', {
+      uuid,
+      url: url(1),
+      config: {
+        author,
+        openType,
+        entryType,
+        isArchived,
+        visibilityType,
+        onOrganization,
+        sort,
+        labels,
+        assignee,
+        CIStatus,
+        reviewType,
+      },
+    });
   }
 
   function startLoadingScreen() {
@@ -325,17 +342,513 @@ function getEntriesWidget(uuid) {
     checkEntries(renderCount);
   }
 
-  function checkEntries(renderCount) {
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function buildApiSearchUrl(page, typeQualifier = '') {
+    const webUrl = new URL(url(page));
+    let query = webUrl.searchParams.get('q') || '';
+
+    // The REST API receives sorting separately from the search query.
+    query = query.replace(/\bsort:[^\s]+/g, '').replace(/\s+/g, ' ').trim();
+
+    // onOrganization represents an organization in the widget config.
+    if (
+      typeof config.onOrganization === 'string' &&
+      config.onOrganization.trim() &&
+      !config.onOrganization.includes('/')
+    ) {
+      const owner = config.onOrganization.trim();
+      query = query.replace(`user:${owner}`, `org:${owner}`);
+    }
+    if (typeQualifier && !query.includes(typeQualifier)) {
+      query = `${query} ${typeQualifier}`.trim();
+    }
+
+    const params = new URLSearchParams();
+    params.set('q', query);
+    params.set('page', String(page || 1));
+    params.set('per_page', '100');
+
+    const sortConfig = {
+      newest: ['created', 'desc'],
+      oldest: ['created', 'asc'],
+      'most-commented': ['comments', 'desc'],
+      'least-commented': ['comments', 'asc'],
+      'recently-updated': ['updated', 'desc'],
+      'least-recently-updated': ['updated', 'asc'],
+    };
+    const sort = sortConfig[config.sort];
+    if (sort) {
+      params.set('sort', sort[0]);
+      params.set('order', sort[1]);
+    }
+
+    return `https://api.github.com/search/issues?${params.toString()}`;
+  }
+
+  async function fetchApiSearchResults(apiUrls) {
+    const results = await Promise.allSettled(
+      apiUrls.map(async (apiUrl) => {
+        console.log('[AAD entries] API subquery started', {
+          uuid,
+          apiUrl,
+          queryType: new URL(apiUrl).searchParams.get('q'),
+        });
+
+        const response = await APIRequest(apiUrl, {
+          headers: {
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+          },
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(
+            `GitHub API returned ${response.status}: ${errorBody.slice(0, 300)}`
+          );
+        }
+
+        const payload = await response.json();
+        if (!Array.isArray(payload.items)) {
+          throw new Error('GitHub API response does not contain items');
+        }
+
+        console.log('[AAD entries] API subquery succeeded', {
+          uuid,
+          apiUrl,
+          totalCount: payload.total_count,
+          itemCount: payload.items.length,
+        });
+
+        return payload;
+      })
+    );
+
+    const fulfilled = results.filter((result) => result.status === 'fulfilled');
+    const rejected = results.filter((result) => result.status === 'rejected');
+
+    console.log('[AAD entries] API subqueries settled', {
+      uuid,
+      total: results.length,
+      succeeded: fulfilled.length,
+      failed: rejected.length,
+      failures: results
+        .map((result, index) => ({ result, apiUrl: apiUrls[index] }))
+        .filter(({ result }) => result.status === 'rejected')
+        .map(({ result, apiUrl }) => ({
+          apiUrl,
+          error: result.reason?.message || String(result.reason),
+        })),
+    });
+
+    if (!fulfilled.length) {
+      throw new Error('All GitHub API entry subqueries failed');
+    }
+
+    const payloads = fulfilled.map((result) => result.value);
+
+    return {
+      totalCount: payloads.reduce(
+        (total, payload) => total + (payload.total_count || 0),
+        0
+      ),
+      items: payloads
+        .flatMap((payload) => payload.items || [])
+        .sort(
+          (left, right) =>
+            new Date(right.updated_at || right.created_at) -
+            new Date(left.updated_at || left.created_at)
+        ),
+    };
+  }
+
+  function getApiEntryState(item) {
+    if (item.pull_request) {
+      if (item.draft) return 'draft-pr';
+      if (item.pull_request.merged_at) return 'merged-pr';
+      if (item.state === 'closed') return 'closed-pr';
+      return 'open-pr';
+    }
+
+    if (item.state === 'closed' && item.state_reason === 'completed') {
+      return 'completed-issue';
+    }
+    if (item.state === 'closed') return 'closed-issue';
+    return 'open-issue';
+  }
+
+  function getApiEntryStateLabel(state) {
+    return {
+      'open-pr': 'Open pull request',
+      'draft-pr': 'Draft pull request',
+      'closed-pr': 'Closed pull request',
+      'merged-pr': 'Merged pull request',
+      'open-issue': 'Open issue',
+      'closed-issue': 'Closed issue',
+      'completed-issue': 'Closed issue as completed',
+    }[state];
+  }
+
+  function getApiEntryIcon(item) {
+    const state = getApiEntryState(item);
+    const icon = item.pull_request
+      ? SVG.prGreen(16, 16).replace('color-fg-open', 'aad-entry-icon-svg')
+      : SVG.issueGreen(16, 16).replace(
+          'class="octicon octicon-issue-opened open"',
+          'class="octicon octicon-issue-opened aad-entry-icon-svg"'
+        );
+
+    return icon.replace(
+      'aad-entry-icon-svg',
+      `aad-entry-icon-svg aad-entry-icon-${state}`
+    );
+  }
+
+  function getApiRepositoryName(item) {
+    if (item.repository?.full_name) {
+      return item.repository.full_name;
+    }
+
+    const repositoryUrl = item.repository_url || '';
+    const match = repositoryUrl.match(/\/repos\/([^/]+\/[^/]+)$/);
+    return match?.[1] || '';
+  }
+
+  function getLabelTextColor(hexColor) {
+    const hex = String(hexColor || '').replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(hex)) return '#24292f';
+
+    const [red, green, blue] = [0, 2, 4].map((index) =>
+      parseInt(hex.slice(index, index + 2), 16)
+    );
+    return red * 299 + green * 587 + blue * 114 > 150000
+      ? '#24292f'
+      : '#ffffff';
+  }
+
+  function renderApiEntries(items, renderCount) {
+    const visibleItems = items.slice(0, renderCount);
+    const list = document.createElement('ul');
+    list.className = 'Box-list';
+
+    visibleItems.forEach((item) => {
+      const entry = document.createElement('li');
+      entry.className = 'Box-row';
+      const labels = (item.labels || [])
+        .map((label) => {
+          const backgroundColor = String(label.color || '').replace('#', '');
+          const color = getLabelTextColor(backgroundColor);
+          const style = /^[0-9a-f]{6}$/i.test(backgroundColor)
+            ? ` style="background-color: #${backgroundColor}; color: ${color};"`
+            : '';
+          return `<span class="aad-entries-api-label"${style}>${escapeHtml(
+            label.name
+          )}</span>`;
+        })
+        .join('');
+      const repository = escapeHtml(getApiRepositoryName(item));
+      const author = escapeHtml(item.user?.login || '');
+      const kind = item.pull_request ? 'Pull request' : 'Issue';
+      const state = getApiEntryState(item);
+      const stateLabel = getApiEntryStateLabel(state);
+
+      entry.innerHTML = `
+        <div class="aad-entries-api-row">
+          <div class="aad-entries-api-title-row">
+            <span class="aad-entries-api-icon" title="${stateLabel}" aria-label="${stateLabel}">
+              ${getApiEntryIcon(item)}
+            </span>
+            <a href="${escapeHtml(item.html_url)}" class="Link--primary text-bold">
+              ${escapeHtml(item.title)}
+            </a>
+          </div>
+          <div class="text-small color-fg-muted">
+            ${kind} #${escapeHtml(item.number)}
+            ${repository ? ` · ${repository}` : ''}
+            ${author ? ` · opened by ${author}` : ''}
+          </div>
+          ${labels ? `<div class="aad-entries-api-labels">${labels}</div>` : ''}
+        </div>
+      `;
+      list.appendChild(entry);
+    });
+
+    addCustomCSS(`
+      .aad-entries-api-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .aad-entries-api-title-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .aad-entries-api-title-row a {
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .aad-entries-api-icon {
+        display: inline-flex;
+        flex: 0 0 16px;
+        margin-top: 2px;
+      }
+
+      .aad-entries-api-labels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 2px;
+      }
+
+      .aad-entries-api-label {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 2em;
+        padding: 2px 7px;
+        font-size: 11px;
+        line-height: 1.2;
+        font-weight: 600;
+      }
+
+      .aad-entry-icon-svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
+
+      .aad-entry-icon-open-pr,
+      .aad-entry-icon-open-issue {
+        color: #1f883d;
+      }
+
+      .aad-entry-icon-draft-pr {
+        color: #8250df;
+      }
+
+      .aad-entry-icon-closed-pr,
+      .aad-entry-icon-closed-issue {
+        color: #cf222e;
+      }
+
+      .aad-entry-icon-merged-pr,
+      .aad-entry-icon-completed-issue {
+        color: #8250df;
+      }
+
+      .${prefix('vertical')} {
+        padding: 8px;
+        display: flex;
+        gap: 8px;
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .${prefix('horizontal')} {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .${prefix('green-ball')} {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #1f893e;
+      }
+
+      .${prefix('header-title')} {
+        font-size: 0.75rem;
+        line-height: 1rem;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-weight: 600;
+      }
+
+      .${prefix('header-desc')} {
+        font-size: 0.75rem;
+        line-height: 1rem;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        opacity: 0.6;
+      }
+
+      .${prefix('not-found-text')} {
+        border-bottom: 1px solid #1f893e;
+      }
+
+    `);
+
+    endLoadingScreen();
+    refs.container.innerHTML = '';
+
+    const header = render(
+      null,
+      `<div class="${prefix('vertical')}">
+        <div class="${prefix('horizontal')}">
+          <div class="${prefix('green-ball')}"></div>
+          <span class="${prefix('header-title')}">${escapeHtml(headerTitle)}</span>
+        </div>
+        <span class="${prefix('header-desc')}">${escapeHtml(headerDescription)}</span>
+      </div>`
+    );
+    refs.container.aadAppendChild(header);
+
+    if (visibleItems.length === 0) {
+      const notFound = render(
+        null,
+        `<div class="aad-w-full aad-center">
+          <span class="${prefix('header-desc')} ${prefix(
+          'not-found-text'
+        )}">No entries found with the given parameters</span>
+        </div>`
+      );
+      refs.container.aadAppendChild(notFound);
+    } else {
+      refs.container.appendChild(list);
+      const loadMoreButtonRefs = {};
+      const loadMoreButton = render(
+        loadMoreButtonRefs,
+        `<button ref="button" type="submit" class="ajax-pagination-btn btn color-border-default f6 mt-2 width-full">
+          Load more…
+        </button>`
+      );
+      loadMoreButtonRefs.button.addEventListener('click', () => {
+        execute(renderCount * 2);
+      });
+      refs.container.aadAppendChild(loadMoreButton);
+    }
+
+    listenEntryClicks();
+  }
+
+  async function checkEntries(renderCount) {
     const fetchUrl = url(1);
+    console.log('[AAD entries] Fetch started', {
+      uuid,
+      fetchUrl,
+      renderCount,
+    });
+
+    let pat = '';
+    try {
+      pat = await getPatFromStorage();
+    } catch (error) {
+      console.warn('[AAD entries] Could not read PAT, using HTML fetch', {
+        uuid,
+        error,
+      });
+    }
+
+    if (pat && pat !== 'deny-all') {
+      const apiUrls =
+        config.entryType === 'issues & pull-requests'
+          ? [
+              buildApiSearchUrl(1, 'is:issue'),
+              buildApiSearchUrl(1, 'is:pr'),
+            ]
+          : [buildApiSearchUrl(1)];
+      console.log('[AAD entries] Trying PAT API first', {
+        uuid,
+        apiUrls,
+      });
+
+      try {
+        const data = await fetchApiSearchResults(apiUrls);
+
+        console.log('[AAD entries] PAT API succeeded', {
+          uuid,
+          totalCount: data.totalCount,
+          receivedItemCount: data.items.length,
+        });
+        renderApiEntries(data.items, renderCount);
+        return;
+      } catch (error) {
+        console.warn('[AAD entries] PAT API failed, falling back to HTML fetch', {
+          uuid,
+          apiUrls,
+          error,
+        });
+      }
+    } else {
+      console.log('[AAD entries] No PAT available, using HTML fetch', { uuid });
+    }
+
     aad_fetch(fetchUrl, {
       redirect: 'follow',
+      credentials: 'include',
     })
       .then((response) => {
+        console.log('[AAD entries] Fetch response received', {
+          uuid,
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          redirected: response.redirected,
+          responseUrl: response.url,
+          contentType: response.headers.get('content-type'),
+        });
         return response.text();
       })
       .then((html) => {
+        const listSelectorMarker = 'data-listview-component="items-list"';
+        const listSelectorIndex = html.indexOf(listSelectorMarker);
+        console.log('[AAD entries] Raw response HTML', html);
+        console.log('[AAD entries] Raw response list marker', {
+          uuid,
+          marker: listSelectorMarker,
+          found: listSelectorIndex !== -1,
+          index: listSelectorIndex,
+          context:
+            listSelectorIndex === -1
+              ? null
+              : html.slice(
+                  Math.max(0, listSelectorIndex - 300),
+                  listSelectorIndex + listSelectorMarker.length + 300
+                ),
+        });
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
+        const listSelectors = [
+          'ul[data-listview-component="items-list"]',
+          '[data-listview-component="items-list"]',
+          '[aria-labelledby*="list-view-container-title"]',
+        ];
+        const selectorMatches = Object.fromEntries(
+          listSelectors.map((selector) => [
+            selector,
+            doc.querySelectorAll(selector).length,
+          ])
+        );
+        console.log('[AAD entries] Response HTML parsed', {
+          uuid,
+          htmlLength: html.length,
+          title: doc.title,
+          selectorMatches,
+          hasLoginForm: Boolean(
+            doc.querySelector('form[action*="login"], input[name="login"]')
+          ),
+          bodyTextPreview: (doc.body?.textContent || '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 200),
+        });
 
         addCustomCSS(`
           .${prefix('hide')} {
@@ -353,6 +866,20 @@ function getEntriesWidget(uuid) {
         const listElement = findGitHubIssuesListElement(doc);
         const list = listElement?.cloneNode(true) || null;
         const childs = Array.from(listElement?.children || []);
+        console.log('[AAD entries] GitHub issues list lookup', {
+          uuid,
+          found: Boolean(listElement),
+          tagName: listElement?.tagName || null,
+          listChildCount: childs.length,
+          listAttributes: listElement
+            ? {
+                dataListviewComponent: listElement.getAttribute(
+                  'data-listview-component'
+                ),
+                ariaLabelledby: listElement.getAttribute('aria-labelledby'),
+              }
+            : null,
+        });
         if (!!list) list.innerHTML = '';
 
         for (let i = 0; i < renderCount; i++) {
@@ -360,6 +887,13 @@ function getEntriesWidget(uuid) {
           list.appendChild(childs[i].cloneNode(true));
         }
 
+        console.log('[AAD entries] Entries selected for render', {
+          uuid,
+          requestedRenderCount: renderCount,
+          availableEntryCount: childs.length,
+          renderedEntryCount: list?.children.length || 0,
+          showingEmptyState: !list,
+        });
         stripUnhydratedGitHubListMetadata(list);
 
         refs.container.innerHTML = '';
@@ -437,32 +971,38 @@ function getEntriesWidget(uuid) {
           }
         `);
 
-        const notFound = render(
-          null,
-          `<div class="aad-w-full aad-center" ref="notFound">
-            <span class="${prefix('header-desc')} ${prefix(
-            'not-found-text'
-          )}">No entries found with the given parameters</span>
-          </div>`
-        );
-
         if (!!list) {
           refs.container.aadAppendChild(header);
           refs.container.appendChild(list);
           refs.container.aadAppendChild(loadMoreButton);
         } else {
           refs.container.aadAppendChild(header);
-          refs.container.appendChild(notFound);
+          refs.container.appendChild(
+            render(
+              null,
+              `<div class="aad-w-full aad-center">
+                <span class="${prefix('header-desc')} ${prefix(
+                'not-found-text'
+              )}">Veriye erişemedim</span>
+              </div>`
+            )
+          );
         }
 
         makeDetailsDynamicResponsive();
         listenEntryClicks();
       })
       .catch((error) => {
+        console.error('[AAD entries] Fetch or render failed', {
+          uuid,
+          fetchUrl,
+          error,
+          stack: error?.stack,
+        });
         endLoadingScreen();
         inner.innerHTML = `
         <div class="aad-w-full aad-center">
-          <span>${error}<span>
+          <span>Veriye erişemedim</span>
         </div>
         `;
       });

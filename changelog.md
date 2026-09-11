@@ -142,3 +142,12 @@ the number of users)
 - toast bus renamed to `aad:new-notification` with detail guard so foreign `onNewNotification` events no longer crash AAD
 - entries widget settings show generated GitHub search URL (readonly; updates after save)
 - entries/recent activity: clone scraped `/issues` list DOM (`data-listview-component` / aria hooks) with page CSS; use `?type=pr` / `?type=issue` instead of search URLs
+
+## 1.2.10
+
+- entries widget uses the GitHub Issues Search API with PAT authentication first.
+- entries falls back to the existing HTML fetch when no PAT is available or the API fails.
+- issue and pull request searches are settled independently so one failed query does not hide successful results.
+- entries shows issue/PR state icons, repository information, compact metadata, and color-coded label badges.
+- modern issue/PR previews automatically load comments through the GitHub API when a PAT is available.
+- entries and preview access failures now show a clear user-facing error state.

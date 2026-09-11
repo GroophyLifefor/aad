@@ -366,9 +366,14 @@ function appendModernCommentsPlaceholder(previewRoot, url, prefixStr) {
     `,
   );
 
-  refs.loadBtn.addEventListener('click', async () => {
+  let commentsLoaded = false;
+  const loadComments = async () => {
+    if (commentsLoaded) return;
+    commentsLoaded = true;
+
     const parsed = parseGitHubUrl(url);
     if (!parsed.owner || !parsed.repo || !parsed.number) {
+      commentsLoaded = false;
       sendNewNotification('Could not parse issue URL for API comments.', {
         type: 'error',
         timeout: 4000,
@@ -388,6 +393,7 @@ function appendModernCommentsPlaceholder(previewRoot, url, prefixStr) {
       renderApiCommentsList(refs.commentsList, comments, prefixStr);
       refs.loadBtn.closest(`.${prefixStr}-comments-notice-box`)?.remove();
     } catch (error) {
+      commentsLoaded = false;
       refs.loadBtn.disabled = false;
       refs.loadBtn.textContent = 'Load comments via API';
       sendNewNotification(error.message || 'Failed to load comments via API.', {
@@ -396,7 +402,19 @@ function appendModernCommentsPlaceholder(previewRoot, url, prefixStr) {
         title: 'Comments API',
       });
     }
-  });
+  };
+
+  refs.loadBtn.addEventListener('click', loadComments);
+
+  getPatFromStorage()
+    .then((pat) => {
+      if (pat && pat !== 'deny-all') {
+        loadComments();
+      }
+    })
+    .catch(() => {
+      // Keep the manual button available if PAT storage cannot be read.
+    });
 
   previewRoot.appendChild(section);
 }
