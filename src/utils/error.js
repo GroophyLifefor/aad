@@ -168,7 +168,6 @@ function fireError(message, data) {
                     },
                     body: JSON.stringify({
                       data: {
-                        ...(data.extra || {}),
                         appVersion: manifestData.version,
                         errorStack: errorInfo.stack || '',
                         errorType: errorInfo.type || '',
